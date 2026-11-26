@@ -1,0 +1,27 @@
+{
+  "wet_day_tolerance": 0.15,
+  "annual_amount_tolerance": 0.25,
+  "climates": {
+    "mediterranean": {
+      "station": "Madrid Retiro, 1981-2010",
+      "threshold_mm": 1,
+      "wet_days": 59.4,
+      "annual_mm": 421,
+      "source": "https://www.aemet.es/en/serviciosclimaticos/datosclimatologicos/valoresclimatologicos?k=val&l=3195"
+    },
+    "oxford": {
+      "station": "Oxford, 1991-2020",
+      "threshold_mm": 1,
+      "wet_days": 117.67,
+      "annual_mm": 681.55,
+      "source": "https://www.metoffice.gov.uk/research/climate/maps-and-data/location-specific-long-term-averages/gcpn7mp10"
+    },
+    "tropical_rainforest": {
+      "station": "Singapore Changi, 1991-2020 (representative rainforest reference)",
+      "threshold_mm": 0.2,
+      "wet_days": 171,
+      "annual_mm": 2113.3,
+      "source": "https://www.weather.gov.sg/climate-climate-of-singapore/"
+    }
+  }
+}

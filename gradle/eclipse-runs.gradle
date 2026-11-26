@@ -1,0 +1,127 @@
+import groovy.xml.XmlParser
+import groovy.xml.XmlUtil
+
+def modCoordinates = [
+        BoP           : 'biomes-o-plenty-220318:2452877',
+        RTG           : 'realistic-terrain-generation-237989:2550453',
+        OTG           : 'open-terrain-generator-265894:2439892',
+        BiomeBundle   : 'biome-bundle-241542:2430752',
+        LostCities    : 'the-lost-cities-269024:2497880',
+        CompatLayer   : 'compatlayer-253729:2532012',
+        GeographiCraft: 'climate-control-geographicraft-76544:2486027',
+        BiomeTweaker  : 'biometweaker-228895:2402226',
+        AbyssalCraft  : 'abyssalcraft-53686:2596856',
+        Thaumcraft    : 'thaumcraft-223628:2546413',
+        Baubles       : 'baubles-227083:2518666',
+        Vampirism     : 'vampirism-become-a-vampire-233029:2555238',
+        HarvestCraft  : 'pams-harvestcraft-221857:2428363',
+        AgriCraft     : 'agricraft-225635:2495110',
+        InfinityLib   : 'infinitylib-251396:2451336',
+        MysticalAgriculture: 'mystical-agriculture-246640:2530121',
+        Forestry      : 'forestry-59751:2476716',
+        BaseMetals    : 'base-metals-240967:9280029',
+        OreSpawn      : 'mmd-orespawn-245586:9518063'
+]
+def compatibilityProfiles = [
+        BoP           : ['BoP'],
+        RTG           : ['RTG'],
+        OTG           : ['OTG'],
+        BiomeBundle   : ['OTG', 'BiomeBundle'],
+        LostCities    : ['LostCities', 'CompatLayer'],
+        RTGBoPGeo     : ['RTG', 'BoP', 'GeographiCraft'],
+        GeographiCraft: ['GeographiCraft'],
+        BiomeTweaker  : ['BiomeTweaker'],
+        AbyssalCraft  : ['AbyssalCraft'],
+        Thaumcraft    : ['Thaumcraft', 'Baubles'],
+        Vampirism     : ['Vampirism'],
+        HarvestCraft  : ['HarvestCraft'],
+        AgriCraft     : ['InfinityLib', 'AgriCraft'],
+        MysticalAgriculture: ['MysticalAgriculture'],
+        Forestry      : ['Forestry'],
+        BaseMetals    : ['OreSpawn', 'BaseMetals'],
+        Farming       : ['HarvestCraft', 'InfinityLib', 'AgriCraft', 'MysticalAgriculture', 'Forestry']
+]
+def publishedMods = modCoordinates.collectEntries { name, coordinates ->
+    [(name): configurations.detachedConfiguration(dependencies.create("curse.maven:${coordinates}"))]
+}
+def dependenciesByMod = [
+        BiomeBundle: ['OTG'],
+        AgriCraft  : ['InfinityLib'],
+        BaseMetals : ['OreSpawn'],
+        LostCities : ['CompatLayer'],
+        Thaumcraft : ['Baubles']
+]
+def developmentMods = publishedMods.collectEntries { name, published ->
+    def mapped = renamer.classes("map${name}DevelopmentMod") {
+        input.fileProvider(providers.provider { published.singleFile })
+        map.from minecraft.dependency.toSrgFile
+        libraries.from configurations.runtimeClasspath, dependenciesByMod.get(name, []).collect { publishedMods[it] }
+        reverse = true
+        naiveSrg = true
+        legacyAccessTransformers = true
+        output = layout.buildDirectory.file("compatibility-mods/mapped/${name}.jar")
+    }
+    def legacyJar = tasks.register("prepare${name}DevelopmentJar", Zip) {
+        inputs.file('gradle/eclipse-runs.gradle').withPathSensitivity(PathSensitivity.NONE)
+        destinationDirectory = layout.buildDirectory.dir('compatibility-mods')
+        archiveFileName = "${name}.jar"
+        from(mapped.flatMap { it.output }.map { zipTree(it.asFile) })
+        // Remapped class bytes no longer match the published jar signatures.
+        exclude 'META-INF/*.SF', 'META-INF/*.RSA', 'META-INF/*.DSA', 'META-INF/*.EC', 'META-INF/SIG-*'
+        filesMatching('META-INF/*_at.cfg') {
+            // Forge 1.10 parses the owner and member as separate tokens.
+            filter { String line -> line.replaceFirst(/^(\s*\S+\s+[\w\/$]+)\.(?=\S)/, '$1 ') }
+        }
+    }
+    [(name): legacyJar.flatMap { it.archiveFile }]
+}
+def compatibilityDirectories = compatibilityProfiles.collectEntries { name, mods ->
+    [(name): layout.projectDirectory.dir("run-compat/${name}")]
+}
+def prepareCompatibilityClients = tasks.register('prepareCompatibilityClients') {
+    group = 'ide'
+    description = 'Prepares the optional mods in the Eclipse compatibility profiles.'
+}
+compatibilityProfiles.each { name, mods ->
+    def prepare = tasks.register("prepare${name}ClientMods", Copy) {
+        from mods.collect { developmentMods[it] }
+        into compatibilityDirectories[name].dir('mods')
+    }
+    prepareCompatibilityClients.configure { dependsOn prepare }
+}
+
+def writeRuntimeLaunch = { File launch, Set<File> runtime, boolean excludeTests ->
+    def xml = new XmlParser().parse(launch)
+    def classpath = xml.listAttribute.find { it.@key == 'org.eclipse.jdt.launching.CLASSPATH' }
+    // Buildship's container includes compile-only mods. Keep Eclipse's project
+    // outputs, launcher and JRE, and supply the resolved runtime libraries.
+    def container = classpath.listEntry.find { it.@value.contains('org.eclipse.buildship.core.gradleclasspathcontainer') }
+    if (container == null) throw new GradleException("Missing Buildship classpath in ${launch.name}")
+    classpath.remove(container)
+    runtime.each { library ->
+        def archive = XmlUtil.escapeXml(library.absolutePath)
+        classpath.appendNode('listEntry', [value: "<runtimeClasspathEntry externalArchive=\"${archive}\" type=\"2\" path=\"5\"/>"])
+    }
+    if (excludeTests) {
+        xml.appendNode('booleanAttribute', [key: 'org.eclipse.jdt.launching.ATTR_EXCLUDE_TEST_CODE', value: 'true'])
+    }
+    launch.setText(XmlUtil.serialize(xml), 'UTF-8')
+}
+
+tasks.named('genEclipseRuns') {
+    dependsOn prepareCompatibilityClients
+    doLast {
+        def productionRuntime = configurations.runtimeClasspath.files
+        def testRuntime = configurations.testRuntimeClasspath.files
+        ['runClient', 'runServer', 'runTestClient', 'runTestServer'].each { name ->
+            boolean production = !name.startsWith('runTest')
+            writeRuntimeLaunch(file("${name}.launch"), production ? productionRuntime : testRuntime, production)
+        }
+        compatibilityDirectories.each { name, directory ->
+            def launch = new XmlParser().parse(file('runClient.launch'))
+            launch.stringAttribute.find { it.@key == 'org.eclipse.jdt.launching.WORKING_DIRECTORY' }.@value =
+                    directory.asFile.absolutePath
+            file("runClient${name}.launch").setText(XmlUtil.serialize(launch), 'UTF-8')
+        }
+    }
+}

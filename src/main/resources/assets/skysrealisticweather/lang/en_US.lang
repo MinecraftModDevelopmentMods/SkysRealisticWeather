@@ -1,0 +1,9 @@
+tile.skysrealisticweather.weather_controller.name=Weather Controller
+itemGroup.skysweatheradmin=Sky's Weather Admin
+key.categories.skysrealisticweather=Sky's Realistic Weather
+key.skysrealisticweather.climateHud=Toggle Climate HUD
+tile.skysrealisticweather.thermometer.name=Thermometer
+hud.skysrealisticweather.temperature=Temperature
+hud.skysrealisticweather.here=Here
+hud.skysrealisticweather.placed=Placed
+tooltip.skysrealisticweather.thermometer=Hold in either hand, or place on a wall or floor.

@@ -1,0 +1,561 @@
+{
+  "policy": "Upper plausible climate expression with clear intervals; all counts are per 365 Minecraft days. Fantasy ranges are deliberate design targets.",
+  "sources": {
+    "uk": "https://www.metoffice.gov.uk/api/assets/file/north-east-england_-climate-met-officepdf?prefix=assets",
+    "tropical": "https://www.weather.gov.sg/climate-climate-of-singapore/",
+    "monsoon": "https://www.bom.gov.au/climate/averages/tables/cw_014015.shtml",
+    "snowy_continental": "https://www.data.jma.go.jp/stats/en/normal/normal.html",
+    "polar": "https://www.antarctica.gov.au/about-antarctica/weather-and-climate/weather/"
+  },
+  "max_natural_wet_pct": 60,
+  "max_fantasy_wet_pct": 70,
+  "min_strong_encounter_seconds": 45,
+  "climates": {
+    "tropical_rainforest": {
+      "wet_days": [
+        200,
+        270
+      ],
+      "snow_days": [
+        0,
+        0
+      ],
+      "thunder_days": [
+        45,
+        125
+      ],
+      "wet_pct": [
+        12,
+        45
+      ]
+    },
+    "tropical_monsoon": {
+      "wet_days": [
+        95,
+        160
+      ],
+      "snow_days": [
+        0,
+        0
+      ],
+      "thunder_days": [
+        25,
+        75
+      ],
+      "wet_pct": [
+        5,
+        35
+      ]
+    },
+    "tropical_savanna": {
+      "wet_days": [
+        60,
+        120
+      ],
+      "snow_days": [
+        0,
+        0
+      ],
+      "thunder_days": [
+        20,
+        65
+      ],
+      "wet_pct": [
+        2,
+        22
+      ]
+    },
+    "hot_desert": {
+      "wet_days": [
+        5,
+        22
+      ],
+      "snow_days": [
+        0,
+        0
+      ],
+      "dust_days": [
+        22,
+        65
+      ],
+      "wet_pct": [
+        0.1,
+        5
+      ]
+    },
+    "cold_desert": {
+      "wet_days": [
+        18,
+        45
+      ],
+      "snow_days": [
+        10,
+        30
+      ],
+      "dust_days": [
+        20,
+        65
+      ],
+      "wet_pct": [
+        0.5,
+        9
+      ]
+    },
+    "semi_arid_steppe": {
+      "wet_days": [
+        80,
+        135
+      ],
+      "snow_days": [
+        15,
+        40
+      ],
+      "thunder_days": [
+        15,
+        50
+      ],
+      "dust_days": [
+        10,
+        40
+      ],
+      "wet_pct": [
+        4,
+        22
+      ]
+    },
+    "mediterranean": {
+      "wet_days": [
+        70,
+        120
+      ],
+      "snow_days": [
+        1,
+        9
+      ],
+      "thunder_days": [
+        8,
+        35
+      ],
+      "wet_pct": [
+        4,
+        22
+      ]
+    },
+    "oxford": {
+      "wet_days": [
+        170,
+        235
+      ],
+      "snow_days": [
+        18,
+        35
+      ],
+      "high_snow_days": [
+        35,
+        85
+      ],
+      "thunder_days": [
+        7,
+        30
+      ],
+      "wet_pct": [
+        12,
+        35
+      ],
+      "cover_days": [
+        15,
+        50
+      ]
+    },
+    "cool_maritime": {
+      "wet_days": [
+        240,
+        310
+      ],
+      "snow_days": [
+        25,
+        65
+      ],
+      "fog_days": [
+        35,
+        100
+      ],
+      "wet_pct": [
+        25,
+        48
+      ]
+    },
+    "humid_subtropical": {
+      "wet_days": [
+        200,
+        270
+      ],
+      "snow_days": [
+        0,
+        6
+      ],
+      "thunder_days": [
+        65,
+        125
+      ],
+      "wet_pct": [
+        15,
+        38
+      ]
+    },
+    "subtropical_highland": {
+      "wet_days": [
+        170,
+        235
+      ],
+      "snow_days": [
+        0,
+        0
+      ],
+      "thunder_days": [
+        25,
+        70
+      ],
+      "fog_days": [
+        40,
+        100
+      ],
+      "wet_pct": [
+        12,
+        35
+      ]
+    },
+    "burlington": {
+      "wet_days": [
+        210,
+        275
+      ],
+      "snow_days": [
+        60,
+        95
+      ],
+      "thunder_days": [
+        30,
+        70
+      ],
+      "wet_pct": [
+        18,
+        40
+      ],
+      "cover_days": [
+        65,
+        140
+      ]
+    },
+    "central_european": {
+      "wet_days": [
+        210,
+        275
+      ],
+      "snow_days": [
+        40,
+        80
+      ],
+      "thunder_days": [
+        25,
+        65
+      ],
+      "wet_pct": [
+        18,
+        40
+      ]
+    },
+    "snowy_continental": {
+      "wet_days": [
+        260,
+        325
+      ],
+      "snow_days": [
+        95,
+        155
+      ],
+      "thunder_days": [
+        15,
+        50
+      ],
+      "wet_pct": [
+        28,
+        58
+      ],
+      "cover_days": [
+        100,
+        180
+      ]
+    },
+    "subarctic": {
+      "wet_days": [
+        200,
+        285
+      ],
+      "snow_days": [
+        140,
+        220
+      ],
+      "thunder_days": [
+        7,
+        30
+      ],
+      "wet_pct": [
+        20,
+        45
+      ],
+      "cover_days": [
+        170,
+        285
+      ]
+    },
+    "tundra": {
+      "wet_days": [
+        120,
+        190
+      ],
+      "snow_days": [
+        100,
+        175
+      ],
+      "wet_pct": [
+        10,
+        35
+      ]
+    },
+    "ice_cap": {
+      "wet_days": [
+        40,
+        85
+      ],
+      "snow_days": [
+        40,
+        85
+      ],
+      "blowing_snow_days": [
+        70,
+        145
+      ],
+      "wet_pct": [
+        4,
+        16
+      ]
+    },
+    "alpine_highlands": {
+      "wet_days": [
+        245,
+        325
+      ],
+      "snow_days": [
+        140,
+        225
+      ],
+      "thunder_days": [
+        25,
+        65
+      ],
+      "wet_pct": [
+        25,
+        58
+      ]
+    },
+    "winter_wonderland": {
+      "wet_days": [
+        275,
+        345
+      ],
+      "snow_days": [
+        270,
+        345
+      ],
+      "blizzard_days": [
+        25,
+        70
+      ],
+      "wet_pct": [
+        35,
+        68
+      ],
+      "cover_days": [
+        300,
+        365
+      ]
+    },
+    "storm_coast": {
+      "wet_days": [
+        280,
+        345
+      ],
+      "thunder_days": [
+        90,
+        180
+      ],
+      "fog_days": [
+        55,
+        140
+      ],
+      "wet_pct": [
+        28,
+        60
+      ]
+    },
+    "golden_autumn": {
+      "wet_days": [
+        160,
+        235
+      ],
+      "snow_days": [
+        15,
+        45
+      ],
+      "fog_days": [
+        90,
+        170
+      ],
+      "wet_pct": [
+        12,
+        35
+      ]
+    },
+    "eternal_spring": {
+      "wet_days": [
+        190,
+        255
+      ],
+      "snow_days": [
+        0,
+        0
+      ],
+      "thunder_days": [
+        2,
+        18
+      ],
+      "wet_pct": [
+        12,
+        35
+      ]
+    },
+    "endless_summer": {
+      "wet_days": [
+        170,
+        245
+      ],
+      "snow_days": [
+        0,
+        0
+      ],
+      "thunder_days": [
+        55,
+        115
+      ],
+      "wet_pct": [
+        10,
+        35
+      ]
+    },
+    "mistwood": {
+      "wet_days": [
+        140,
+        235
+      ],
+      "fog_days": [
+        170,
+        280
+      ],
+      "thunder_days": [
+        0,
+        8
+      ],
+      "wet_pct": [
+        10,
+        35
+      ]
+    },
+    "thunderlands": {
+      "wet_days": [
+        270,
+        345
+      ],
+      "thunder_days": [
+        150,
+        245
+      ],
+      "wet_pct": [
+        25,
+        58
+      ]
+    },
+    "two_winters": {
+      "wet_days": [
+        240,
+        320
+      ],
+      "snow_days": [
+        125,
+        195
+      ],
+      "thunder_days": [
+        15,
+        55
+      ],
+      "wet_pct": [
+        28,
+        58
+      ],
+      "cover_days": [
+        170,
+        270
+      ]
+    },
+    "sunscorched_wastes": {
+      "wet_days": [
+        8,
+        25
+      ],
+      "snow_days": [
+        0,
+        0
+      ],
+      "dust_days": [
+        50,
+        110
+      ],
+      "heat_days": [
+        65,
+        170
+      ],
+      "wet_pct": [
+        0.2,
+        7
+      ]
+    },
+    "short_seasons": {
+      "wet_days": [
+        210,
+        285
+      ],
+      "snow_days": [
+        55,
+        105
+      ],
+      "thunder_days": [
+        25,
+        75
+      ],
+      "wet_pct": [
+        18,
+        42
+      ]
+    }
+  },
+  "native_mappings": {
+    "reference": "central_european",
+    "jungle": "tropical_rainforest",
+    "desert": "hot_desert",
+    "cold_taiga": "subarctic",
+    "arctic": "tundra",
+    "highland": "central_european",
+    "coast": "oxford",
+    "mountain": "alpine_highlands"
+  }
+}

@@ -1,0 +1,12 @@
+Sky's Realistic Weather
+Copyright SkyBlade1978
+Licensed under LGPL-2.1-only.
+
+The starter library follows the Köppen–Geiger climate families described by
+Beck et al. (2023), doi:10.1038/s41597-023-02549-6. Regional references include
+NOAA, the UK Met Office, AEMET (Spain), the Meteorological Service Singapore,
+Japan Meteorological Agency, IMGW-PIB (Poland) and the Faroe Islands' weather
+summary. See the configuration guide for the referenced climate data.
+
+The optional online mode uses model data provided by Open-Meteo.com,
+transformed into Minecraft weather.

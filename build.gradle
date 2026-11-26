@@ -1,0 +1,222 @@
+plugins {
+    id 'java'
+    id 'eclipse'
+    id 'net.minecraftforge.renamer' version '1.1.5'
+    id 'net.minecraftforge.gradle' version '7.0.34'
+}
+
+apply from: 'gradle/legacy-tools.gradle'
+
+group = mod_group
+version = mod_version
+base.archivesName = 'SkysRealisticWeather'
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(8)
+    withSourcesJar()
+    withJavadocJar()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs.add('-proc:none')
+}
+
+tasks.withType(Test).configureEach { useJUnitPlatform() }
+
+tasks.withType(Javadoc).configureEach {
+    options.encoding = 'UTF-8'
+    options.addStringOption('Xdoclint:none', '-quiet')
+    options.addBooleanOption('notimestamp', true)
+}
+
+tasks.withType(AbstractArchiveTask).configureEach {
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
+
+minecraft {
+    mappings channel: 'stable', version: mapping_version
+    runs {
+        configureEach {
+            workingDir.convention layout.projectDirectory.dir(
+                    providers.gradleProperty('weatherRunDirectory').getOrElse('run'))
+            systemProperty 'fml.coreMods.load', 'zone.moddev.mc.skysrealisticweather.core.WeatherLoadingPlugin'
+            if (providers.gradleProperty('weatherProbeMode').isPresent()) {
+                systemProperty 'skyweather.probe', providers.gradleProperty('weatherProbeMode').get()
+            }
+        }
+        register('client') { args '--width', '1280', '--height', '720' }
+        register('server') { args '--nogui' }
+    }
+}
+
+repositories {
+    exclusiveContent {
+        forRepository { maven { url = 'https://www.cursemaven.com' } }
+        filter { includeGroup 'curse.maven' }
+    }
+    minecraft.mavenizer(it)
+    maven fg.forgeMaven
+    maven fg.minecraftLibsMaven
+    mavenCentral()
+    maven { url = 'https://libraries.minecraft.net/' }
+}
+
+dependencies {
+    compileOnly 'curse.maven:realistic-terrain-generation-237989:2550453'
+    compileOnly 'curse.maven:open-terrain-generator-265894:2439892'
+    implementation minecraft.dependency("net.minecraftforge:forge:${minecraft_version}-${forge_version}")
+    constraints {
+        implementation('org.lwjgl.lwjgl:lwjgl:2.9.4-nightly-20150209') {
+            because 'Eclipse merges compile and runtime classpaths. Match the Minecraft runtime version to keep LaunchWrapper’s LWJGL 2.9.1 from shadowing it.'
+        }
+    }
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.2'
+}
+
+def mergedOutput = layout.buildDirectory.dir('forge10-development/main')
+def syncDevelopmentOutput = tasks.register('syncDevelopmentOutput', Sync) {
+    dependsOn tasks.named('classes')
+    from sourceSets.main.output
+    into mergedOutput
+}
+tasks.configureEach {
+    if (name in ['runClient', 'runServer']) {
+        dependsOn syncDevelopmentOutput
+        doFirst {
+            classpath = files(mergedOutput, classpath.minus(sourceSets.main.output))
+        }
+    }
+}
+eclipse {
+    classpath {
+        defaultOutputDir = file('bin/main')
+        file.whenMerged { classpath ->
+            classpath.entries.findAll { it.kind == 'src' && it.path in [
+                    'src/main/java', 'src/main/resources', 'build/resources/main', 'build/generated/sources/buildInfo']
+            }.each { entry ->
+                if (entry.path == 'src/main/resources') entry.path = 'build/resources/main'
+                entry.output = 'bin/main'
+            }
+            def resources = classpath.entries.findAll { it.kind == 'src' && it.path == 'build/resources/main' }
+            resources.drop(1).each { classpath.entries.remove(it) }
+        }
+    }
+    synchronizationTasks 'classes', 'genEclipseRuns'
+}
+tasks.named('eclipseClasspath') { dependsOn tasks.named('classes') }
+
+def prepareEclipseResources = tasks.register('prepareEclipseResources', Copy) {
+    dependsOn tasks.named('processResources')
+    from layout.buildDirectory.dir('resources/main')
+    into layout.projectDirectory.dir('bin/main')
+}
+apply from: 'gradle/eclipse-runs.gradle'
+tasks.named('genEclipseRuns') {
+    dependsOn syncDevelopmentOutput
+    finalizedBy prepareEclipseResources
+}
+
+// Keep the metadata and annotation version driven by the same Gradle properties.
+def metadata = [version: project.version, modid: mod_id, name: mod_name,
+                description: mod_description, mcversion: minecraft_version]
+def generateBuildInfo = tasks.register('generateBuildInfo', Sync) {
+    inputs.properties(metadata)
+    from('src/template/java') { expand metadata }
+    into layout.buildDirectory.dir('generated/sources/buildInfo')
+}
+sourceSets.main.java.srcDir(generateBuildInfo)
+
+tasks.named('processResources', ProcessResources) {
+    inputs.properties(metadata)
+    filteringCharset = 'UTF-8'
+    filesMatching('mcmod.info') { expand metadata }
+}
+
+tasks.named('jar', Jar) {
+    archiveClassifier = 'deobf'
+    destinationDirectory = layout.buildDirectory.dir('libs-dev')
+    from(['LICENSE', 'LICENSE.spdx', 'NOTICE']) { into 'META-INF' }
+    manifest {
+        attributes 'FMLCorePlugin': 'zone.moddev.mc.skysrealisticweather.core.WeatherLoadingPlugin',
+                'FMLCorePluginContainsFMLMod': 'true',
+                'Implementation-Title': 'SkysRealisticWeather',
+                'Implementation-Version': project.version
+    }
+}
+def releaseJar = renamer.classes(tasks.named('jar', Jar)) {
+    map.from minecraft.dependency.toSrgFile
+    archiveClassifier = null
+    output = layout.buildDirectory.file("libs/SkysRealisticWeather-${project.version}.jar")
+}
+def apiJar = tasks.register('apiJar', Jar) {
+    archiveClassifier = 'api'
+    from(sourceSets.main.output) { include 'zone/moddev/mc/skysrealisticweather/api/**' }
+    from(['LICENSE', 'LICENSE.spdx', 'NOTICE']) { into 'META-INF' }
+}
+tasks.named('assemble') { dependsOn releaseJar, apiJar }
+['apiElements', 'runtimeElements'].each { configurationName ->
+    configurations.named(configurationName) { artifacts.clear() }
+    artifacts { add(configurationName, releaseJar) }
+}
+tasks.register('writeReleaseChecksum') {
+    dependsOn releaseJar
+    def artifact = layout.buildDirectory.file("libs/SkysRealisticWeather-${project.version}.jar")
+    def checksum = layout.buildDirectory.file("libs/SkysRealisticWeather-${project.version}.jar.sha256")
+    inputs.file(artifact)
+    outputs.file(checksum)
+    doLast {
+        File jar = artifact.get().asFile
+        String hash = java.security.MessageDigest.getInstance('SHA-256').digest(jar.bytes).encodeHex()
+        checksum.get().asFile.setText("${hash}  ${jar.name}\n", 'UTF-8')
+    }
+}
+
+sourceSets {
+    integrationTest {
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+    }
+}
+def runtimeProbe = tasks.register('runtimeProbe', Jar) {
+    archiveFileName = 'skyweather-probe-mapped.jar'
+    destinationDirectory = layout.buildDirectory.dir('verification/probe')
+    from sourceSets.integrationTest.output
+}
+def packagedProbe = renamer.classes(runtimeProbe) {
+    map.from minecraft.dependency.toSrgFile
+    output = layout.buildDirectory.file('verification/probe/skyweather-probe.jar')
+}
+
+def crashProbe = tasks.register('runtimeCrashProbe', Jar) {
+    archiveFileName = 'weather-qualification-probe-mapped.jar'
+    destinationDirectory = layout.buildDirectory.dir('verification/probe')
+    from(sourceSets.integrationTest.output) { include 'zone/moddev/mc/skysrealisticweather/verify/crash/**' }
+}
+def packagedCrashProbe = renamer.classes(crashProbe) {
+    map.from minecraft.dependency.toSrgFile
+    output = layout.buildDirectory.file('verification/probe/weather-qualification-probe.jar')
+}
+tasks.register('prepareCrashProbe') { dependsOn packagedCrashProbe, tasks.named('prepareRuntimeProbe') }
+tasks.register('prepareRuntimeProbe') {
+    group = 'verification'
+    dependsOn packagedProbe, releaseJar
+    def code = files(fileTree('src/main'), fileTree('src/integrationTest'), fileTree('gradle'),
+            'build.gradle', 'gradle.properties')
+    def main = layout.buildDirectory.file("libs/SkysRealisticWeather-${project.version}.jar")
+    def probe = layout.buildDirectory.file('verification/probe/skyweather-probe.jar')
+    def receipt = layout.buildDirectory.file('verification/probe/probe-build.json')
+    inputs.files(code)
+    inputs.file(main)
+    inputs.file(probe)
+    outputs.file(receipt)
+    doLast {
+        def hash = { File value -> java.security.MessageDigest.getInstance('SHA-256').digest(value.bytes).encodeHex().toString() }
+        def result = [main_sha256: hash(main.get().asFile), probe_sha256: hash(probe.get().asFile),
+                source_sha256: code.files.sort().collectEntries { value -> [(relativePath(value)): hash(value)] }]
+        receipt.get().asFile.setText(groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(result)), 'UTF-8')
+    }
+}

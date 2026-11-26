@@ -1,0 +1,36 @@
+{
+  "variants": {
+    "facing=north,wall=false": {
+      "model": "skysrealisticweather:thermometer",
+      "y": 0
+    },
+    "facing=east,wall=false": {
+      "model": "skysrealisticweather:thermometer",
+      "y": 90
+    },
+    "facing=south,wall=false": {
+      "model": "skysrealisticweather:thermometer",
+      "y": 180
+    },
+    "facing=west,wall=false": {
+      "model": "skysrealisticweather:thermometer",
+      "y": 270
+    },
+    "facing=north,wall=true": {
+      "model": "skysrealisticweather:thermometer_wall",
+      "y": 0
+    },
+    "facing=east,wall=true": {
+      "model": "skysrealisticweather:thermometer_wall",
+      "y": 90
+    },
+    "facing=south,wall=true": {
+      "model": "skysrealisticweather:thermometer_wall",
+      "y": 180
+    },
+    "facing=west,wall=true": {
+      "model": "skysrealisticweather:thermometer_wall",
+      "y": 270
+    }
+  }
+}
