@@ -10,7 +10,18 @@ public final class TemperatureZoneIndex {
     public static final class Entry {
         public final TemperatureZone zone;
         public final BlockPos furnace;
-        public Entry(TemperatureZone zone, BlockPos furnace) { this.zone=zone;this.furnace=furnace==null?null:furnace.toImmutable(); }
+        private final int furnaceRadius;
+        public Entry(TemperatureZone zone, BlockPos furnace) {
+            this.zone=zone;this.furnace=furnace==null?null:furnace.toImmutable();
+            furnaceRadius=furnace==null?0:Math.max(Math.max(furnace.getX()-zone.minimum.getX(),zone.maximum.getX()-furnace.getX()),
+                    Math.max(furnace.getZ()-zone.minimum.getZ(),zone.maximum.getZ()-furnace.getZ()));
+        }
+        /** Furnace entries store a temperature difference; ordinary API zones retain their fixed values. */
+        public float furnaceBonus(BlockPos position) {
+            if(furnaceRadius<=0)return 0;
+            double distance=position.distanceSq(furnace);
+            return distance>=(double)furnaceRadius*furnaceRadius?0:zone.temperature*(float)(1-Math.sqrt(distance)/furnaceRadius);
+        }
     }
     private static final Comparator<Entry> ORDER = Comparator.<Entry>comparingInt(e -> e.zone.priority).reversed().thenComparing(e -> e.zone.id.toString());
     private final Map<ResourceLocation,Entry> entries = new HashMap<>();

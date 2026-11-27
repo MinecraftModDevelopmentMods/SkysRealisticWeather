@@ -23,6 +23,9 @@ public final class FarmingSettings {
     public final boolean enabled, harvestcraft, agricraft, mystical, forestry;
     private final String[] profileRows, mappingRows;
     private final Map<String, PlantGrowthProfile> profiles = new LinkedHashMap<>();
+    private final List<String> issues = new ArrayList<>();
+    private final Map<String, PlantGrowthProfile> scriptProfiles = new LinkedHashMap<>();
+    private final Map<String, List<Mapping>> scripts = new HashMap<>();
     private final Map<String, List<Mapping>> overrides = new HashMap<>(), registrations = new HashMap<>(), defaults = new HashMap<>();
     private final Map<IBlockState, Resolved> states = Collections.synchronizedMap(new IdentityHashMap<>());
 
@@ -38,7 +41,7 @@ public final class FarmingSettings {
                 String[] p = row.split(",", -1);
                 if (p.length != 5 || !p[0].matches("[a-z0-9_]+") || p[0].equals("exempt")) throw new IllegalArgumentException("profile format");
                 profiles.put(p[0], new PlantGrowthProfile(Float.parseFloat(p[1]), Float.parseFloat(p[2]), Float.parseFloat(p[3]), Float.parseFloat(p[4])));
-            } catch (IllegalArgumentException invalid) { warn(row, invalid); }
+            } catch (IllegalArgumentException invalid) { issues.add(row+": "+invalid.getMessage()); warn(row, invalid); }
         }
         for (Map.Entry<String, JsonElement> e : DEFAULT_DATA.getAsJsonObject("mappings").entrySet()) {
             add(defaults, new Mapping(e.getKey(), e.getValue().getAsString(), null));
@@ -51,7 +54,7 @@ public final class FarmingSettings {
                 String id = row.substring(split + 1).trim();
                 // An invalid explicit profile falls back to native, rather than silently using another rule.
                 add(overrides, new Mapping(row.substring(0, split).trim(), id, null));
-            } catch (IllegalArgumentException invalid) { warn(row, invalid); }
+            } catch (IllegalArgumentException invalid) { issues.add(row+": "+invalid.getMessage()); warn(row, invalid); }
         }
     }
 
@@ -72,11 +75,37 @@ public final class FarmingSettings {
 
     public FarmingSettings withEnabled(boolean value) {
         Map<String, PlantGrowthProfile> registered = registeredProfiles();
-        return new FarmingSettings(value, harvestcraft, agricraft, mystical, forestry, profileRows, mappingRows, registered);
+        return new FarmingSettings(value, harvestcraft, agricraft, mystical, forestry, profileRows, mappingRows, registered).withScriptProfiles(scriptProfiles);
     }
+
+    public FarmingSettings withScriptProfiles(Map<String, PlantGrowthProfile> values) {
+        if (values.size() > 8192) throw new IllegalArgumentException("Too many script crop rules");
+        FarmingSettings copy = new FarmingSettings(enabled, harvestcraft, agricraft, mystical, forestry, profileRows, mappingRows, registeredProfiles());
+        values.forEach((selector, profile) -> {
+            copy.scriptProfiles.put(selector, Objects.requireNonNull(profile));
+            add(copy.scripts, new Mapping(selector, "script:" + selector, profile));
+        });
+        return copy;
+    }
+    public Map<String, PlantGrowthProfile> scriptProfiles() { return Collections.unmodifiableMap(scriptProfiles); }
 
     public String[] profileRows() { return profileRows.clone(); }
     public String[] mappingRows() { return mappingRows.clone(); }
+    public List<String> issues() { return Collections.unmodifiableList(issues); }
+    /** Definition metadata only; does not inspect or load chunks. */
+    public List<Map<String,Object>> rules() {
+        List<Map<String,Object>> result=new ArrayList<>();
+        describe(result,"script",scripts);describe(result,"config",overrides);describe(result,"api",registrations);describe(result,"bundled",defaults);
+        return result;
+    }
+    private void describe(List<Map<String,Object>> result,String source,Map<String,List<Mapping>> bank) {
+        bank.values().forEach(list->list.forEach(m->{
+            Map<String,Object> row=new LinkedHashMap<>();row.put("selector",m.selector.text);row.put("source",source);row.put("profile",m.id);
+            PlantGrowthProfile p=m.profile==null?profiles.get(m.id):m.profile;
+            row.put("resolved",p!=null);if(p!=null){row.put("exempt",p.exempt);if(!p.exempt)row.put("minecraftTemperatures",new float[]{p.minimum,p.idealMinimum,p.idealMaximum,p.maximum});}
+            result.add(row);
+        }));
+    }
     public Map<String, PlantGrowthProfile> registeredProfiles() {
         Map<String, PlantGrowthProfile> result = new LinkedHashMap<>();
         registrations.values().forEach(list -> list.forEach(m -> result.put(m.selector.text, m.profile)));
@@ -87,10 +116,12 @@ public final class FarmingSettings {
         String block = state.getBlock().getRegistryName().toString();
         boolean cache = plantId.equals(block);
         if (cache && states.containsKey(state)) return states.get(state);
-        Mapping mapping = match(overrides, plantId, block, state);
-        if (mapping == null) mapping = match(registrations, plantId, block, state);
-        if (mapping == null) mapping = match(defaults, plantId, block, state);
-        Resolved result = mapping == null ? null : new Resolved(mapping.id, mapping.profile != null ? mapping.profile : profiles.get(mapping.id));
+        Mapping mapping = match(scripts, plantId, block, state);
+        String source="script";
+        if (mapping == null) {mapping = match(overrides, plantId, block, state);source="config";}
+        if (mapping == null) {mapping = match(registrations, plantId, block, state);source="api";}
+        if (mapping == null) {mapping = match(defaults, plantId, block, state);source="bundled";}
+        Resolved result = mapping == null ? null : new Resolved(mapping.id, mapping.profile != null ? mapping.profile : profiles.get(mapping.id),source);
         if (cache) states.put(state, result);
         return result;
     }
@@ -112,7 +143,8 @@ public final class FarmingSettings {
     public static final class Resolved {
         public final String id;
         public final PlantGrowthProfile profile;
-        Resolved(String id, PlantGrowthProfile profile) { this.id = id; this.profile = profile; }
+        public final String source;
+        Resolved(String id, PlantGrowthProfile profile,String source) { this.id = id; this.profile = profile;this.source=source; }
     }
     private static final class Mapping {
         final Selector selector;
@@ -124,6 +156,7 @@ public final class FarmingSettings {
         final String id, text;
         final Map<String, String> properties = new LinkedHashMap<>();
         public Selector(String text) {
+            if(text==null)throw new IllegalArgumentException("Plant selector is required");
             this.text = text;
             int bracket = text.indexOf('[');
             id = bracket < 0 ? text : text.substring(0, bracket);

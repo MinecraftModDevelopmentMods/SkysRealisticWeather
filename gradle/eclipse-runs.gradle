@@ -20,7 +20,12 @@ def modCoordinates = [
         MysticalAgriculture: 'mystical-agriculture-246640:2530121',
         Forestry      : 'forestry-59751:2476716',
         BaseMetals    : 'base-metals-240967:9280029',
-        OreSpawn      : 'mmd-orespawn-245586:9518063'
+        OreSpawn      : 'mmd-orespawn-245586:9518063',
+        CraftTweaker  : 'crafttweaker-239197:2433444',
+        ToughAsNails  : 'maven.modrinth:ge1sOdFH:9sk3Ji4h',
+        JEI           : 'jei-238222:2428966',
+        Hwyla         : 'hwyla-253449:2433252',
+        TheOneProbe   : 'the-one-probe-245211:2496984'
 ]
 def compatibilityProfiles = [
         BoP           : ['BoP'],
@@ -39,17 +44,24 @@ def compatibilityProfiles = [
         MysticalAgriculture: ['MysticalAgriculture'],
         Forestry      : ['Forestry'],
         BaseMetals    : ['OreSpawn', 'BaseMetals'],
-        Farming       : ['HarvestCraft', 'InfinityLib', 'AgriCraft', 'MysticalAgriculture', 'Forestry']
+        Farming       : ['HarvestCraft', 'InfinityLib', 'AgriCraft', 'MysticalAgriculture', 'Forestry'],
+        CraftTweaker  : ['CraftTweaker'],
+        ToughAsNails  : ['ToughAsNails'],
+        JEI           : ['JEI'],
+        Hwyla         : ['Hwyla'],
+        TheOneProbe   : ['CompatLayer', 'TheOneProbe'],
+        PackSupport   : ['CraftTweaker', 'ToughAsNails', 'JEI', 'Hwyla', 'CompatLayer', 'TheOneProbe', 'HarvestCraft', 'InfinityLib', 'AgriCraft', 'MysticalAgriculture', 'Forestry']
 ]
 def publishedMods = modCoordinates.collectEntries { name, coordinates ->
-    [(name): configurations.detachedConfiguration(dependencies.create("curse.maven:${coordinates}"))]
+    [(name): configurations.detachedConfiguration(dependencies.create(coordinates.startsWith('maven.modrinth:') ? coordinates : "curse.maven:${coordinates}"))]
 }
 def dependenciesByMod = [
         BiomeBundle: ['OTG'],
         AgriCraft  : ['InfinityLib'],
         BaseMetals : ['OreSpawn'],
         LostCities : ['CompatLayer'],
-        Thaumcraft : ['Baubles']
+        Thaumcraft : ['Baubles'],
+        TheOneProbe: ['CompatLayer']
 ]
 def developmentMods = publishedMods.collectEntries { name, published ->
     def mapped = renamer.classes("map${name}DevelopmentMod") {

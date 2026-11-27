@@ -17,7 +17,7 @@ public final class BiomeWeather {
 
     public BiomeWeather(WeatherSettings settings, long seed) {
         this.settings = settings;
-        settings.biomes.presets.values().forEach(preset -> regions.put(preset.id, new Region(preset, seed, settings.profile)));
+        settings.biomes.presets.values().forEach(preset -> regions.put(preset.id, new Region(preset, seed, settings.profile, settings.calendarOffset)));
     }
 
     public Region region(Biome biome, long time) {
@@ -26,6 +26,7 @@ public final class BiomeWeather {
         region.update(time, solar(time));
         return region;
     }
+    public ClimateProfile profile(Biome biome) { return regions.get(settings.biomes.preset(biome).id).profile; }
 
     /** A vanilla weather carrier. Local queries use the episode for their own biome. */
     WeatherEpisode carrier(long time) {
@@ -59,9 +60,11 @@ public final class BiomeWeather {
         public WeatherEpisode episode;
         public WeatherEpisode temperatureEpisode;
         public float daytimeTemperature;
+        private final long offset;
         private long sampledTime = Long.MIN_VALUE;
 
-        Region(Preset preset, long seed, ClimateProfile calendar) {
+        Region(Preset preset, long seed, ClimateProfile calendar, long offset) {
+            this.offset = offset;
             this.preset = preset;
             ClimateProfile.Period[] periods = new ClimateProfile.Period[4];
             int remaining = calendar.daysInYear();
@@ -75,13 +78,13 @@ public final class BiomeWeather {
                 periods[i] = new ClimateProfile.Period(days, p.temperature, p.wetness, p.thunder, p.fog);
             }
             profile = new ClimateProfile(Math.min(2, preset.profile.strength * calendar.strength), periods);
-            schedule = new WeatherSchedule(seed, profile, preset.weather);
+            schedule = new WeatherSchedule(seed, profile, preset.weather, offset);
         }
 
         void update(long time, float solar) {
             if (sampledTime == time) return;
             sampledTime = time;
-            reading = profile.at(time);
+            reading = profile.at(ClimateClock.shift(time, offset));
             episode = schedule.at(time);
             temperatureEpisode = schedule.thermalAt(time);
             daytimeTemperature = solar * ClimateProfile.temperatureRange(reading.wetness);

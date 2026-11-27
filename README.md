@@ -44,10 +44,19 @@ thermometer or right-clicking it gives a local reading. It uses your Celsius
 or Fahrenheit preference and needs no operator permissions. See
 [thermometers](docs/THERMOMETER.md).
 
-Burning vanilla furnaces provide a small warm area for crops and temperature
-readouts. Other mods can register their own 3D temperature zones through the
+Burning vanilla furnaces, fire, lava and ordinary torches add warmth to the local
+temperature, tapering with distance, for crops and temperature readouts. Each
+source has a configurable bonus and radius; overlapping heaters use the strongest
+bonus. Other mods can register their own
+3D temperature zones through the
 API, for example to manage a heated greenhouse. See
 [local temperature zones](docs/TEMPERATURE_ZONES.md).
+
+Modpacks can define crop temperatures and biome climates through CraftTweaker
+3. Tough As Nails can use the local weather temperature while retaining its
+body temperature and survival systems. JEI, Hwyla and The One Probe provide
+crop climate information. Operator validation and JSON reports help diagnose
+pack rules. See [modpack support](docs/PACK_SUPPORT.md).
 
 ## Install
 
@@ -63,7 +72,9 @@ See [configuration](docs/CONFIGURATION.md).
 
 Operators can place a Weather Controller from **Sky's Weather Admin** or
 open it with `/skyweather gui`. It previews weather and presets live, edits
-climate settings for the session, and jumps between seasons.
+climate settings live, and jumps between seasons. Save explicit edits to the
+world, or discard them to restore saved settings. Calendar controls preserve
+the daylight clock.
 Use `/skyweather climate` or the F3 climate readout to inspect local conditions.
 
 An optional server-side Open-Meteo feed can mirror modelled weather at a

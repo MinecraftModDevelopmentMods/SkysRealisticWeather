@@ -318,8 +318,9 @@ public final class WeatherConfigScreen extends GuiScreen {
             }
             if (WeatherConfiguration.mode() != ClimateMode.PER_BIOME) add(elements, WeatherConfiguration.EVENTS, "Weather Events");
             add(elements, WeatherConfiguration.CLIENT, "Display and Climate HUD");
-            add(elements, WeatherConfiguration.HEATING, "Local temperature zones and furnaces");
+            add(elements, WeatherConfiguration.HEATING, "Local temperature zones and heat sources");
             add(elements, zone.moddev.mc.skysrealisticweather.climate.FarmingSettings.CATEGORY, "Plant Growth");
+            add(elements, "integrations", "Optional mod integrations");
             return elements;
         }
 
@@ -332,7 +333,7 @@ public final class WeatherConfigScreen extends GuiScreen {
                         boolean profile = name.equals(zone.moddev.mc.skysrealisticweather.climate.FarmingSettings.CATEGORY) && child.getName().equals("profiles");
                         if (child.isProperty() && (profile || child.getName().equals("temperature"))) children.set(i,
                                 new TemperatureConfigElement(WeatherConfiguration.file().getCategory(name).get(child.getName()), WeatherConfiguration.temperatureUnit(), profile));
-                        else if(child.isProperty()&&name.equals(WeatherConfiguration.HEATING)&&child.getName().equals("furnaceMinimumCelsius"))
+                        else if(child.isProperty()&&name.equals(WeatherConfiguration.HEATING)&&child.getName().endsWith("BonusCelsius"))
                             children.set(i,new TemperatureConfigElement(WeatherConfiguration.file().getCategory(name).get(child.getName()),WeatherConfiguration.temperatureUnit(),false,true));
                     }
                     return children;

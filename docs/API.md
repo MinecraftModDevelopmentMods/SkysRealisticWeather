@@ -1,4 +1,4 @@
-# Weather API, version 7
+# Weather API, version 8
 
 Use `zone.moddev.mc.skysrealisticweather.api`. The `-api.jar` in `build/libs`
 is the compile-only artifact. Use the main mod jar at runtime.
@@ -8,11 +8,16 @@ before loading a separate integration class that references the API.
 
 ```groovy
 dependencies {
-    compileOnly files('libs/SkysRealisticWeather-0.1.17.110021-api.jar')
+    compileOnly files('libs/SkysRealisticWeather-0.1.21.110021-api.jar')
 }
 ```
 
-API version 7 retains the API 6 signatures and adds runtime
+API 8 retains the API 7 method signatures and appends `FIRE`, `LAVA` and `TORCH`
+to `TemperatureSample.Source`. Local queries include their server-configured
+warmth; outdoor and world-generation queries remain independent. The source ID
+is `skysrealisticweather:heat/<type>/<x>/<y>/<z>` for these automatic sources.
+
+API version 7 retained the API 6 signatures and added runtime
 [local temperature zones](TEMPERATURE_ZONES.md), effective-temperature queries
 and source metadata. Existing outdoor and generation temperature queries retain
 their meaning. API 6 introduced the plant growth profiles and queries described

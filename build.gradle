@@ -53,6 +53,10 @@ minecraft {
 
 repositories {
     exclusiveContent {
+        forRepository { maven { url = 'https://api.modrinth.com/maven' } }
+        filter { includeGroup 'maven.modrinth' }
+    }
+    exclusiveContent {
         forRepository { maven { url = 'https://www.cursemaven.com' } }
         filter { includeGroup 'curse.maven' }
     }
@@ -64,6 +68,11 @@ repositories {
 }
 
 dependencies {
+    compileOnly 'curse.maven:crafttweaker-239197:2433444'
+    compileOnly('maven.modrinth:ge1sOdFH:9sk3Ji4h') { transitive = false }
+    compileOnly 'curse.maven:jei-238222:2428966'
+    compileOnly 'curse.maven:hwyla-253449:2433252'
+    compileOnly 'curse.maven:the-one-probe-245211:2496984'
     compileOnly 'curse.maven:realistic-terrain-generation-237989:2550453'
     compileOnly 'curse.maven:open-terrain-generator-265894:2439892'
     implementation minecraft.dependency("net.minecraftforge:forge:${minecraft_version}-${forge_version}")
@@ -201,6 +210,17 @@ def packagedCrashProbe = renamer.classes(crashProbe) {
     output = layout.buildDirectory.file('verification/probe/weather-qualification-probe.jar')
 }
 tasks.register('prepareCrashProbe') { dependsOn packagedCrashProbe, tasks.named('prepareRuntimeProbe') }
+
+def packProbe = tasks.register('runtimePackProbe', Jar) {
+    archiveFileName = 'weather-pack-probe-mapped.jar'
+    destinationDirectory = layout.buildDirectory.dir('verification/probe')
+    from(sourceSets.integrationTest.output) { include 'zone/moddev/mc/skysrealisticweather/verify/pack/**' }
+}
+def packagedPackProbe = renamer.classes(packProbe) {
+    map.from minecraft.dependency.toSrgFile
+    output = layout.buildDirectory.file('verification/probe/weather-pack-probe.jar')
+}
+tasks.register('preparePackProbe') { dependsOn packagedPackProbe, tasks.named('prepareRuntimeProbe') }
 tasks.register('prepareRuntimeProbe') {
     group = 'verification'
     dependsOn packagedProbe, releaseJar

@@ -1,6 +1,6 @@
 # Local temperature zones
 
-API 7 lets another mod register an inclusive 3D cuboid with a fixed temperature.
+API 8 lets another mod register an inclusive 3D cuboid with a fixed temperature.
 The zone supplies the effective temperature for supported crop growth, plant
 tooltips, thermometers and the compact HUD. F3 and `/skyweather climate` also
 report the effective temperature, outdoor temperature and its source/zone ID.
@@ -75,8 +75,8 @@ existing registration. Use cuboids rather than a separate zone for every block.
 - `WeatherApi.getLocalTemperature(world, pos)` returns the effective temperature
   as an `OptionalDouble` at a loaded position, including in other dimensions.
 - `WeatherApi.getTemperatureSample(world, pos)` returns the effective and
-  outdoor temperatures, `AMBIENT`, `ZONE`, `FURNACE` or `FORESTRY` source, and
-  the winning zone ID where applicable.
+  outdoor temperatures, `AMBIENT`, `ZONE`, `FURNACE`, `FORESTRY`, `FIRE`, `LAVA`
+  or `TORCH` source, and the winning zone/source ID where applicable.
 - Existing `getTemperature`, `getWeather` and `getClimate` continue to describe
   the outdoor atmospheric climate. Their supplied-biome generation queries are
   unchanged and do not consult local zones.
@@ -95,20 +95,29 @@ events and climate maps continue to use the outdoor climate. An API-heated space
 does not by itself prevent water freezing or remove native Arctic snow. Native
 lighting and other mods' own rules still apply.
 
-## Vanilla furnaces
+## Vanilla heat sources
 
-A loaded, ticking, burning **vanilla furnace** automatically supplies a
-**5 × 5 × 5** zone centred on its block, with a **20 °C minimum**. It never
-cools a warmer biome. Its priority is −100, so ordinary child-mod zones override
-it. Multiple furnaces do not add their temperatures together. Walls are not
-checked, and the zone can extend through them. Furnaces are the only automatic
-vanilla heat source in this version; torches, fire and lava do not register zones.
+A loaded, ticking, burning **vanilla furnace** adds warmth to the local outdoor
+temperature. The bonus is **+20 °C at the furnace**, tapering linearly to zero
+at the configured spherical radius. Cold and warm surroundings both receive
+the same bonus at the same distance. For example, a 10-block radius gives
++20, +18, +16 °C at distances 0, 1 and 2 blocks, reaching zero at 10 blocks.
+With 5 °C outdoor air those readings are 25, 23 and 21 °C.
+
+The default radius is 10 blocks. Vertical and diagonal distances use the same
+spherical falloff; the corners of the enclosing cube are outside it. Player
+readouts sample eye height, so standing beside a floor-level furnace receives
+about +17.2 °C rather than the source block's full +20 °C.
+Its priority is −100, so ordinary child-mod zones override
+it. All vanilla heat sources use the strongest applicable bonus, independently of
+their registry IDs; their temperatures do not add together. Walls are not
+checked, and warmth can extend through them.
 
 Registration is refreshed through the furnace's existing tick at a staggered
 one-second interval. Burnout/broken/unloaded source blocks stop contributing;
 short internal leases clean up abandoned registrations. Saved furnace fuel is
 restored by Minecraft and heating re-registers after its native tick resumes.
-The furnace integration adds no general block-change or world-generation hook.
+The furnace integration uses its existing tick hook.
 If another transformer prevents its attachment, it logs a warning and leaves
 the zone API and weather system available.
 
@@ -116,10 +125,44 @@ Configure the server's `heating` category, then restart Minecraft/the server:
 
 | Setting | Default | Effect |
 | --- | --- | --- |
-| `enabled` | `true` | Enables API zones and automatic furnace zones. Forestry's existing controlled climates remain independent. |
-| `furnaceRadius` | `2` | Radius on all axes, 0–8. Zero disables automatic furnace heating. |
-| `furnaceMinimumCelsius` | `20` | Temperature floor, −50 to 100 °C in the file. The config editor uses the player's Celsius/Fahrenheit preference. |
+| `enabled` | `true` | Enables API zones and all automatic vanilla heating. Forestry's existing controlled climates remain independent. |
+| `furnaceRadius` | `10` | Spherical falloff radius, 0–32 blocks. Zero disables automatic furnace heating. The default bonus drops 2 °C per block of radial distance. |
+| `furnaceBonusCelsius` | `20` | Temperature increase at the source, 0–100 Celsius degrees. The editor uses Δ°C or Δ°F; +20 °C is +36 °F, without adding Fahrenheit's absolute-temperature offset. |
+| `fireRadius` / `fireBonusCelsius` | `8` / `35` | Vanilla fire: strong, fairly short-range warmth. |
+| `lavaRadius` / `lavaBonusCelsius` | `12` / `60` | Still and flowing vanilla lava: strongest, widest warmth. |
+| `torchRadius` / `torchBonusCelsius` | `4` / `4` | Ordinary vanilla torches, including wall torches: gentle local warmth. Redstone torches are excluded. |
+
+All bonuses are gameplay air-temperature increases, not flame or molten-material
+temperatures. For example a torch adds +3 °C one block away and +2 °C two blocks
+away, reaching zero at four. Fire adds +17.5 °C at four blocks; lava adds +30 °C
+at six. Per-source radii accept 0–32 blocks and bonuses 0–100 Celsius degrees.
+Zero radius or zero bonus disables that type. No heater bonuses stack, even
+between different types. Explicit API zones keep their priority semantics
+(automatic sources have priority −100); Forestry-controlled positions still win.
+The `furnace/` and `heat/` ID prefixes in this mod's namespace are reserved.
+
+Fire/lava/torch discovery uses a lazy cache of nearby loaded block sections,
+including sources already present in saved terrain. It does not create a zone
+or ticking object for every lava block. The existing committed block-change
+hook invalidates a cached section when a source appears, disappears or changes
+type. It checks old/new source types before looking up a world or cache, so ordinary
+terrain changes and fire/lava metadata updates avoid that lookup. Extinguishing
+fire, breaking torches and solidifying lava remove their
+warmth immediately. A one-second refresh also handles mods that bypass that
+hook or client full-section replacements. Caches have weak section keys and are
+discarded with the world. Queries never load missing chunks. This adds no
+world-generation pass or new core hook. Server radii/bonuses are synchronized
+with watched chunk snapshots; clients use those values with their loaded block
+states, independent of local heating preferences.
+
+On upgrade to config version 8, a radius of 2 from older configurations is
+treated as the legacy default and changed to 10. Other radii and disabled
+heating are preserved. After upgrading, explicitly setting 2 is respected on
+subsequent restarts. When upgrading, the old
+`furnaceMinimumCelsius` value seeds the new bonus once (negative values become
+zero). The old key is retained but hidden and ignored once the new key exists.
+An explicitly configured `furnaceBonusCelsius` always wins.
 
 These settings appear under **Configure selected mode → Edit Settings → Local
-temperature zones and furnaces**. Dedicated-server settings take precedence over
+temperature zones and heat sources**. Dedicated-server settings take precedence over
 the connecting client's heating configuration.

@@ -22,13 +22,15 @@ public final class WeatherConfiguration {
     public static final String CLIENT = "client";
     public static final String HEATING = "heating";
     private static boolean heatingEnabled=true;
-    private static int furnaceHeatRadius=2;
-    private static float furnaceHeatTemperature=1.05F;
+    private static int furnaceHeatRadius=10;
+    private static float furnaceHeatBonus=.9F;
+    private static int fireHeatRadius=8,lavaHeatRadius=12,torchHeatRadius=4;
+    private static float fireHeatBonus=35*.045F,lavaHeatBonus=60*.045F,torchHeatBonus=4*.045F;
     public static final String BIOMES = "biome_climates";
     public static final String CALENDAR = "calendar";
     private static final String F3_CLIMATE = "f3ClimateHud";
     private static final String COMPACT_CLIMATE = "compactClimateHud";
-    private static final String CONFIG_VERSION = "6";
+    private static final String CONFIG_VERSION = "8";
     private static final String[] LOCATION_NAMES = {"BURLINGTON", "OXFORD", "CUSTOM"};
     private static final List<String> LEGACY_PRESETS = Arrays.asList("burlington", "oxford", "winter_wonderland", "short_seasons");
     private static Configuration config;
@@ -37,6 +39,30 @@ public final class WeatherConfiguration {
     private static LiveLocation startupLocation;
     private static String startupPreset;
     private static String[] startupLabels;
+    private static ClimateProfile startupUniversalProfile;
+    private static String[] startupUniversalLabels;
+
+    public static boolean integration(String name) {
+        return config == null || config.getBoolean(name, "integrations", true, "Enable optional " + name + " integration when installed. Restart to apply.");
+    }
+
+    public static String startingSeason() {
+        return config == null ? "WORLD_CLOCK" : config.getString("startingSeason", CALENDAR, "WORLD_CLOCK",
+                "Initial season for newly created worlds only. WORLD_CLOCK preserves the vanilla date.",
+                new String[] {"WORLD_CLOCK", "SPRING", "SUMMER", "AUTUMN", "WINTER"});
+    }
+
+    public static ClimateProfile sharedCalendar() {
+        Preset selected = config == null ? defaultPreset() : preset(activePreset());
+        ClimateProfile source = selected == null ? readSavedProfile(defaultPreset().profile) : selected.profile;
+        ClimateProfile.Period[] phases = new ClimateProfile.Period[4]; int[] days = {92,92,91,90};
+        for (int i=0;i<4;i++) {
+            ClimateProfile.Period p=source.period(i);
+            int length=config==null?days[i]:config.getInt(category(Season.values()[i])+"Days",CALENDAR,days[i],1,365,"Shared calendar phase length in Minecraft days for Per Biome Climate.");
+            phases[i]=new ClimateProfile.Period(length,p.temperature,p.wetness,p.thunder,p.fog);
+        }
+        return new ClimateProfile(config==null?1:floatSetting("biomeStrength",GENERAL,1,0,2,"Overall strength of per-biome seasonal effects."),phases);
+    }
 
     private WeatherConfiguration() {
     }
@@ -77,14 +103,34 @@ public final class WeatherConfiguration {
         startupLocation = location();
         startupPreset = activePreset();
         startupLabels = activePhaseLabels();
+        Preset universal=preset(startupPreset);
+        startupUniversalProfile=universal==null?readSavedProfile(defaultPreset().profile):universal.profile;
+        startupUniversalLabels=universal==null?readSavedLabels():universal.phaseLabels();
+        startupSettings=startupSettings.withPhaseLabels(startupLabels);
         config.getString("temperatureUnit", CLIENT, "CELSIUS", "Display temperatures in Celsius or Fahrenheit. Applies immediately; simulation/config-file values remain in Minecraft units.", new String[] {"CELSIUS", "FAHRENHEIT"});
         config.getBoolean(F3_CLIMATE, CLIENT, true, "Show climate details on the F3 debug screen.");
         config.getBoolean(COMPACT_CLIMATE, CLIENT, false, "Show a compact season, temperature and weather readout.");
         config.getInt("distantWeatherDistance", CLIENT, 192, 0, 256,
                 "Distant rain/snow curtains in blocks; 0 disables. Limited by loaded terrain and view distance. Fast graphics caps this at 96. Client only; applies immediately.");
         heatingEnabled=config.getBoolean("enabled",HEATING,true,"Enable registered local-temperature zones. Server authoritative; restart to apply.");
-        furnaceHeatRadius=config.getInt("furnaceRadius",HEATING,2,0,8,"Burning vanilla furnace zone radius in blocks, including vertically. 0 disables furnace zones. No wall/room checks.");
-        furnaceHeatTemperature=0.15F+(float)config.getFloat("furnaceMinimumCelsius",HEATING,20,-50,100,"Minimum temperature near a burning furnace. Celsius regardless of display preference; never cools warmer ambient air.")*.045F;
+        if((previousVersion==null||previousVersion.matches("[1-7]"))&&config.hasKey(HEATING,"furnaceRadius")
+                &&config.getCategory(HEATING).get("furnaceRadius").getInt()==2) {
+            config.getCategory(HEATING).get("furnaceRadius").set(10);
+            LogManager.getLogger("Sky's Realistic Weather").info("Upgraded the legacy two-block furnace radius to the ten-block default.");
+        }
+        furnaceHeatRadius=config.getInt("furnaceRadius",HEATING,10,0,32,"Spherical furnace heat radius in blocks. Warmth tapers linearly to zero at this distance. 0 disables furnace heating. No wall/room checks.");
+        float previousBonus=20;
+        if(config.hasKey(HEATING,"furnaceMinimumCelsius")) {
+            previousBonus=floatSetting("furnaceMinimumCelsius",HEATING,20,0,100,"Legacy absolute floor. Used only to seed furnaceBonusCelsius; edit that setting instead.");
+            config.getCategory(HEATING).get("furnaceMinimumCelsius").setShowInGui(false);
+        }
+        furnaceHeatBonus=floatSetting("furnaceBonusCelsius",HEATING,previousBonus,0,100,
+                "Warmth added to local ambient at a burning furnace, in Celsius degrees. Tapers to zero at furnaceRadius; overlapping furnaces use the strongest bonus. Restart to apply.")*.045F;
+        fireHeatRadius=heatRadius("fire",8);fireHeatBonus=heatBonus("fire",35);
+        lavaHeatRadius=heatRadius("lava",12);lavaHeatBonus=heatBonus("lava",60);
+        torchHeatRadius=heatRadius("torch",4);torchHeatBonus=heatBonus("torch",4);
+        for (String name : new String[] {"crafttweaker", "toughasnails", "jei", "waila", "theoneprobe"}) integration(name);
+        startingSeason();
         config.save();
     }
 
@@ -111,6 +157,8 @@ public final class WeatherConfiguration {
     public static String[] startupLabels() {
         return startupLabels.clone();
     }
+    public static ClimateProfile startupUniversalProfile() { return startupUniversalProfile; }
+    public static String[] startupUniversalLabels() { return startupUniversalLabels==null?null:startupUniversalLabels.clone(); }
 
     public static Configuration file() {
         return config;
@@ -127,8 +175,20 @@ public final class WeatherConfiguration {
                 : Math.max(0, Math.min(256, config.getCategory(CLIENT).get("distantWeatherDistance").getInt()));
     }
     public static boolean heatingEnabled() { return heatingEnabled; }
+    private static int heatRadius(String source,int value) {
+        return config.getInt(source+"Radius",HEATING,value,0,32,"Spherical "+source+" heat radius in blocks. Linear falloff; 0 disables. No wall/room checks. Server restart required.");
+    }
+    private static float heatBonus(String source,float value) {
+        return floatSetting(source+"BonusCelsius",HEATING,value,0,100,"Warmth added to ambient at "+source+", in Celsius degrees. Tapers to zero at its radius. Overlapping vanilla heaters use the strongest bonus, never sum. Server restart required.")*.045F;
+    }
     public static int furnaceHeatRadius() { return furnaceHeatRadius; }
-    public static float furnaceHeatTemperature() { return furnaceHeatTemperature; }
+    public static float furnaceHeatBonus() { return furnaceHeatBonus; }
+    public static int fireHeatRadius() { return fireHeatRadius; }
+    public static float fireHeatBonus() { return fireHeatBonus; }
+    public static int lavaHeatRadius() { return lavaHeatRadius; }
+    public static float lavaHeatBonus() { return lavaHeatBonus; }
+    public static int torchHeatRadius() { return torchHeatRadius; }
+    public static float torchHeatBonus() { return torchHeatBonus; }
 
     public static boolean showF3Climate() {
         return config.getCategory(CLIENT).get(F3_CLIMATE).getBoolean();
@@ -156,7 +216,7 @@ public final class WeatherConfiguration {
     }
 
     public static Preset preset(String id) {
-        return library.get(Preset.normalizeId(id));
+        return id==null?null:library.get(Preset.normalizeId(id));
     }
 
     public static String activePreset() {

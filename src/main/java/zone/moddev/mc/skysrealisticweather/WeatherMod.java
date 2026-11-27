@@ -21,7 +21,7 @@ import zone.moddev.mc.skysrealisticweather.network.WeatherAdminMessage;
 
 @Mod(modid = BuildInfo.ID, name = BuildInfo.NAME, version = BuildInfo.VERSION,
         acceptedMinecraftVersions = "[1.10.2]", acceptableRemoteVersions = "[" + BuildInfo.VERSION + "]",
-        dependencies = "required-after:Forge@[12.18.3.2511,)",
+        dependencies = "required-after:Forge@[12.18.3.2511,);after:MineTweaker3;after:ToughAsNails;after:Waila;after:theoneprobe;after:JEI",
         guiFactory = "zone.moddev.mc.skysrealisticweather.client.WeatherGuiFactory")
 public final class WeatherMod {
     public static final SimpleNetworkWrapper NETWORK = NetworkRegistry.INSTANCE.newSimpleChannel(BuildInfo.ID);
@@ -33,6 +33,7 @@ public final class WeatherMod {
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         WeatherConfiguration.load(event.getSuggestedConfigurationFile());
+        zone.moddev.mc.skysrealisticweather.compat.Integrations.init();
         NETWORK.registerMessage(new WeatherMessage.Handler(), WeatherMessage.class, 0, Side.CLIENT);
         NETWORK.registerMessage(new WeatherAdminMessage.Handler(), WeatherAdminMessage.class, 1, Side.CLIENT);
         NETWORK.registerMessage(zone.moddev.mc.skysrealisticweather.network.TemperaturePreferenceMessage.Handler.class,
@@ -64,7 +65,13 @@ public final class WeatherMod {
     }
 
     @Mod.EventHandler
+    public void serverStarted(net.minecraftforge.fml.common.event.FMLServerStartedEvent event) {
+        zone.moddev.mc.skysrealisticweather.compat.ScriptRules.started();
+    }
+
+    @Mod.EventHandler
     public void serverStopped(FMLServerStoppedEvent event) {
         ServerWeather.INSTANCE.close();
+        zone.moddev.mc.skysrealisticweather.compat.ScriptRules.close();
     }
 }

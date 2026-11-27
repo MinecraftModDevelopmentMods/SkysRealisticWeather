@@ -302,7 +302,8 @@ public final class WeatherTransformer implements IClassTransformer, Opcodes {
             bridge.add(new InsnNode(DUP));
             bridge.add(new VarInsnNode(ALOAD, 0));
             bridge.add(new VarInsnNode(ALOAD, 1));
-            bridge.add(hook(HOOKS, "blockChanged", "(" + STATE + CHUNK + POS + ")V"));
+            bridge.add(new VarInsnNode(ALOAD, 2));
+            bridge.add(hook(HOOKS, "blockChanged", "(" + STATE + CHUNK + POS + STATE + ")V"));
             set.instructions.insertBefore(instruction, bridge);
             exits++;
         }

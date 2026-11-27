@@ -36,11 +36,11 @@ public final class WeatherCommand extends CommandBase {
     public static final String NAME = "skyweather";
     private static final int OPERATOR_LEVEL = 2;
     private static final String[] ACTIONS = {"status", "climate", "crop", "gui", "season", "time", "weather", "preset", "presets",
-            "strength", "phase", "option", "mode", "reset"};
+            "strength", "phase", "option", "mode", "reset", "world", "validate", "dump"};
     private static final String[] SEASONS = {"spring", "summer", "autumn", "winter"};
     private static final String[] OPTIONS = {"passive", "surface", "foliage", "fog", "scheduled", "plants"};
     private static final String[] TIMES = {"dawn", "noon", "dusk", "midnight"};
-    private static final String USAGE = "/skyweather <status|climate|crop|gui|season|time|weather|preset|presets|strength|phase|option|mode|reset>";
+    private static final String USAGE = "/skyweather <status|climate|crop|gui|season|time|weather|preset|presets|strength|phase|option|mode|reset|world|validate|dump>";
 
     @Override
     public String getName() {
@@ -87,6 +87,8 @@ public final class WeatherCommand extends CommandBase {
             if (sender instanceof EntityPlayerMP) sendView((EntityPlayerMP) sender, weather, false, false, result);
         } catch (ArithmeticException overflow) {
             throw new CommandException("The requested date is outside Minecraft's clock range.");
+        } catch (IllegalStateException | IllegalArgumentException invalid) {
+            throw new CommandException(invalid.getMessage());
         } catch (CommandException invalid) {
             if (sender instanceof EntityPlayerMP) {
                 String message = new TextComponentTranslation(invalid.getMessage(), invalid.getErrorObjects()).getUnformattedText();
@@ -111,6 +113,21 @@ public final class WeatherCommand extends CommandBase {
     private static String run(ServerWeather weather, ICommandSender sender, String[] args) throws CommandException {
         if (args.length == 0) return status(weather);
         switch (args[0]) {
+            case "validate":
+            case "dump":
+                arity(args,1,1,"/skyweather "+args[0]);
+                java.util.Map<String,Object> report=PackDiagnostics.collect(weather);
+                if(args[0].equals("validate"))return PackDiagnostics.summary(report);
+                try { return "Weather report saved to "+PackDiagnostics.dump(weather,report); }
+                catch(java.io.IOException failed){throw new CommandException("Cannot write weather report: "+failed.getMessage());}
+            case "world":
+                arity(args,2,2,"/skyweather world <save|discard|reset>");
+                switch(args[1]) {
+                    case "save": weather.saveWorld(); return "Saved explicit weather overrides to this world.";
+                    case "discard": weather.restore(); return "Discarded unsaved weather previews.";
+                    case "reset": weather.resetWorld(); return "Removed world overrides; using pack defaults.";
+                    default: throw new WrongUsageException("/skyweather world <save|discard|reset>");
+                }
             case "mode":
                 arity(args, 2, 2, "/skyweather mode <per_biome|universal|real_world>");
                 try {
@@ -159,7 +176,7 @@ public final class WeatherCommand extends CommandBase {
             case "reset":
                 arity(args, 1, 1, "/skyweather reset");
                 weather.restore();
-                return "Restored the server's startup weather settings.";
+                return "Restored saved weather settings; unsaved previews discarded.";
             default:
                 throw new WrongUsageException(USAGE);
         }
@@ -193,7 +210,7 @@ public final class WeatherCommand extends CommandBase {
     private static String season(ServerWeather weather, String[] args) throws CommandException {
         if (args.length == 1) return status(weather);
         String usage = "/skyweather season <next|previous|set <season> [day]|advance <days>>";
-        long now = weather.world().getWorldTime();
+        long now = weather.calendarTime();
         ClimateProfile profile = weather.settings().profile;
         long target;
         switch (args[1]) {
@@ -216,7 +233,7 @@ public final class WeatherCommand extends CommandBase {
                 throw new WrongUsageException(usage);
         }
         if (target < 0) throw new CommandException("The requested season is before the start of this world.");
-        weather.setDaylight(target);
+        weather.setCalendar(target);
         return status(weather);
     }
 
@@ -364,6 +381,7 @@ public final class WeatherCommand extends CommandBase {
         if (args.length <= 4 && args[0].equals("climate")) return getTabCompletionCoordinate(args, 1, pos);
         if (args.length == 2) {
             switch (args[0]) {
+                case "world": return getListOfStringsMatchingLastWord(args, "save", "discard", "reset");
                 case "mode": return getListOfStringsMatchingLastWord(args, "per_biome", "universal", "real_world");
                 case "season": return getListOfStringsMatchingLastWord(args, "next", "previous", "set", "advance");
                 case "time": return getListOfStringsMatchingLastWord(args, TIMES);
