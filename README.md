@@ -91,4 +91,5 @@ Weather data provided by [Open-Meteo.com](https://open-meteo.com/).
 - [Weather events by climate](docs/WEATHER.md)
 - [Weather controller and server commands](docs/ADMIN.md)
 - [Build and verification](docs/BUILDING.md)
+- [Languages and translation coverage](docs/LANGUAGES.md)
 - [Licence](LICENSE) and [credits](NOTICE)
