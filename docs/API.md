@@ -8,9 +8,14 @@ before loading a separate integration class that references the API.
 
 ```groovy
 dependencies {
-    compileOnly files('libs/SkysRealisticWeather-0.1.21.110021-api.jar')
+    compileOnly files('libs/SkysRealisticWeather-0.1.22.110021-api.jar')
 }
 ```
+
+The published compile-only coordinate is
+`zone.moddev.mc.skysrealisticweather:SkysRealisticWeather:0.1.22.110021:api`.
+Use the MMD Maven repository configured by your project. The API jar does not
+replace the main mod at runtime.
 
 API 8 retains the API 7 method signatures and appends `FIRE`, `LAVA` and `TORCH`
 to `TemperatureSample.Source`. Local queries include their server-configured
