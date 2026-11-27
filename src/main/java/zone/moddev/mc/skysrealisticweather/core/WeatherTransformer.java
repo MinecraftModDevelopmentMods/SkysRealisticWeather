@@ -30,9 +30,8 @@ public final class WeatherTransformer implements IClassTransformer, Opcodes {
     private static final String BLOCK = "Lnet/minecraft/block/Block;";
     private static final String OVERWORLD_GENERATOR = "net.minecraft.world.gen.ChunkProviderOverworld";
     private static final String BOP_GENERATOR = "biomesoplenty.common.world.ChunkProviderGenerateBOP";
-    private static final String RTG_GENERATOR = "rtg.world.gen.ChunkProviderRTG";
     private static final String LOST_GENERATOR = "mcjty.lostcities.dimensions.world.LostCityChunkGenerator";
-    private static final String OTG_FROST = "com.khorn.terraincontrol.generator.FrozenSurfaceHelper";
+    private static final String OTG_FROST = "com.pg85.otg.generator.FrozenSurfaceHelper";
     private static final String PROPERTY_ENUM = "net.minecraft.block.properties.PropertyEnum";
     private static final String SECTION_STATES = "net.minecraft.world.chunk.BlockStateContainer";
 
@@ -57,7 +56,6 @@ public final class WeatherTransformer implements IClassTransformer, Opcodes {
                 case "net.minecraft.client.renderer.EntityRenderer": patchRenderer(node); break;
                 case OVERWORLD_GENERATOR:
                 case BOP_GENERATOR:
-                case RTG_GENERATOR:
                 case LOST_GENERATOR: patchGeneration(node, target); break;
                 case OTG_FROST: patchOtgFrost(node); break;
                 default: return bytes;
@@ -174,13 +172,12 @@ public final class WeatherTransformer implements IClassTransformer, Opcodes {
     }
 
     private static boolean isGenerator(String name) {
-        return OVERWORLD_GENERATOR.equals(name) || BOP_GENERATOR.equals(name) || RTG_GENERATOR.equals(name)
+        return OVERWORLD_GENERATOR.equals(name) || BOP_GENERATOR.equals(name)
                 || LOST_GENERATOR.equals(name) || OTG_FROST.equals(name);
     }
 
     private static void patchGeneration(ClassNode type, String target) {
-        MethodNode populate = RTG_GENERATOR.equals(target) ? method(type, "doPopulate", "doPopulate", "(II)V")
-                : method(type, "populate", "func_185931_b", "(II)V");
+        MethodNode populate = method(type, "populate", "func_185931_b", "(II)V");
         if (LOST_GENERATOR.equals(target)) {
             redirect(populate, "canBlockFreeze", "func_175670_e", "(" + POS + "Z)Z", HOOKS,
                     "generationFreeze", "(" + WORLD + POS + "Z)Z", -1, 1);
@@ -188,29 +185,14 @@ public final class WeatherTransformer implements IClassTransformer, Opcodes {
             redirect(populate, "canBlockFreezeWater", "func_175675_v", "(" + POS + ")Z", HOOKS,
                     "generationFreeze", "(" + WORLD + POS + ")Z", -1, 1);
         }
-        if (RTG_GENERATOR.equals(target)) {
-            int count = 0;
-            for (AbstractInsnNode insn : populate.instructions.toArray()) {
-                if (!matches(insn, "canSnowAt", "canSnowAt", "(" + POS + "Z)Z")) continue;
-                if (!"rtg/api/util/WorldUtil".equals(((MethodInsnNode) insn).owner)) continue;
-                populate.instructions.insertBefore(insn, new VarInsnNode(ALOAD, 0));
-                populate.instructions.insertBefore(insn, new FieldInsnNode(GETFIELD, type.name, "worldObj", WORLD));
-                populate.instructions.set(insn, hook("zone/moddev/mc/skysrealisticweather/game/RtgWeather", "snow",
-                        "(Lrtg/api/util/WorldUtil;" + POS + "Z" + WORLD + ")Z"));
-                count++;
-            }
-            expect(count, 1, "RTG snow eligibility");
-            expect((int) type.fields.stream().filter(f -> f.name.equals("worldObj") && f.desc.equals(WORLD)).count(), 1, "RTG world");
-        } else {
-            redirect(populate, "canSnowAt", "func_175708_f", "(" + POS + "Z)Z", HOOKS,
-                    "generationSnow", "(" + WORLD + POS + "Z)Z", -1, 1);
-        }
+        redirect(populate, "canSnowAt", "func_175708_f", "(" + POS + "Z)Z", HOOKS,
+                "generationSnow", "(" + WORLD + POS + "Z)Z", -1, 1);
         redirect(populate, "setBlockState", "func_180501_a", "(" + POS + STATE + "I)Z", HOOKS,
                 "placeGeneratedDeposit", "(" + WORLD + POS + STATE + "I)Z", -1, 2);
     }
 
     private static void patchOtgFrost(ClassNode type) {
-        String otg = "com/khorn/terraincontrol/";
+        String otg = "com/pg85/otg/";
         String localWorld = "L" + otg + "LocalWorld;";
         expect((int) type.fields.stream().filter(f -> f.name.equals("world") && f.desc.equals(localWorld)).count(), 1, "OTG world");
         MethodNode column = method(type, "freezeColumn", "freezeColumn", "(II)V");

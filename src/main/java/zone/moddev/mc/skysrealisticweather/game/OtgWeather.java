@@ -1,18 +1,18 @@
 package zone.moddev.mc.skysrealisticweather.game;
 
-import com.khorn.terraincontrol.LocalBiome;
-import com.khorn.terraincontrol.LocalMaterialData;
-import com.khorn.terraincontrol.LocalWorld;
-import com.khorn.terraincontrol.forge.ForgeBiome;
-import com.khorn.terraincontrol.forge.ForgeWorld;
-import com.khorn.terraincontrol.util.minecraftTypes.DefaultMaterial;
+import com.pg85.otg.LocalBiome;
+import com.pg85.otg.LocalMaterialData;
+import com.pg85.otg.LocalWorld;
+import com.pg85.otg.forge.ForgeBiome;
+import com.pg85.otg.forge.ForgeWorld;
+import com.pg85.otg.util.minecraftTypes.DefaultMaterial;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.biome.Biome;
 
-/** Called at OTG v21's existing surface height and virtual biome lookup. */
+/** Called at OTG v9's existing surface height and virtual biome lookup. */
 public final class OtgWeather {
     private OtgWeather() {
     }
@@ -35,7 +35,7 @@ public final class OtgWeather {
         if (temperature >= WeatherState.SNOW_LINE || !world.getWorldBorder().contains(surface) || !world.canSeeSky(surface)) {
             return nativeTemperature;
         }
-        LocalMaterialData support = terrain.getMaterial(x, y - 1, z);
+        LocalMaterialData support = terrain.getMaterial(x, y - 1, z, false);
         BlockPos water = surface.down();
         if (support.isLiquid()) {
             if (selected.getBiomeConfig().iceBlock.isMaterial(DefaultMaterial.ICE)

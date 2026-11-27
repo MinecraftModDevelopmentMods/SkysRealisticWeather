@@ -39,7 +39,7 @@ public final class Thermometer extends BlockHorizontal {
     public static boolean heldBy(EntityLivingBase entity) {
         return entity != null && (isThermometer(entity.getHeldItemMainhand()) || isThermometer(entity.getHeldItemOffhand()));
     }
-    private static boolean isThermometer(ItemStack stack) { return stack != null && stack.stackSize > 0 && stack.getItem() == Item.getItemFromBlock(BLOCK); }
+    private static boolean isThermometer(ItemStack stack) { return stack != null && !stack.isEmpty() && stack.getItem() == Item.getItemFromBlock(BLOCK); }
     public static OptionalDouble temperature(World world, BlockPos pos) {
         if (world == null || !world.isBlockLoaded(pos, false)) return OptionalDouble.empty();
         OptionalDouble weather = WeatherApi.getLocalTemperature(world, pos);
@@ -56,7 +56,7 @@ public final class Thermometer extends BlockHorizontal {
         if (value.isPresent()) player.sendMessage(new TextComponentString("Temperature: " + TemperatureDisplay.forSender(player).format((float) value.getAsDouble())));
     }
     @Override public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand,
-                                               ItemStack held, EnumFacing side, float x, float y, float z) {
+                                               EnumFacing side, float x, float y, float z) {
         read(world, pos, player); return true;
     }
     private static boolean support(World world, BlockPos pos, EnumFacing towardSupport) {
@@ -76,7 +76,7 @@ public final class Thermometer extends BlockHorizontal {
         return getDefaultState().withProperty(WALL, side.getAxis().isHorizontal())
                 .withProperty(FACING, side.getAxis().isHorizontal() ? side : placer.getHorizontalFacing().getOpposite());
     }
-    @Override public void neighborChanged(IBlockState state, World world, BlockPos pos, Block neighbor) {
+    @Override public void neighborChanged(IBlockState state, World world, BlockPos pos, Block neighbor, BlockPos fromPos) {
         EnumFacing direction = state.getValue(WALL) ? state.getValue(FACING).getOpposite() : EnumFacing.DOWN;
         if (!support(world, pos, direction)) { dropBlockAsItem(world, pos, state, 0); world.setBlockToAir(pos); }
     }
@@ -88,7 +88,7 @@ public final class Thermometer extends BlockHorizontal {
     @Override public boolean isFullCube(IBlockState state) { return false; }
     @net.minecraftforge.fml.relauncher.SideOnly(net.minecraftforge.fml.relauncher.Side.CLIENT)
     @Override public BlockRenderLayer getBlockLayer() { return BlockRenderLayer.CUTOUT; }
-    @Override public AxisAlignedBB getCollisionBoundingBox(IBlockState state, World world, BlockPos pos) { return NULL_AABB; }
+    @Override public AxisAlignedBB getCollisionBoundingBox(IBlockState state, IBlockAccess world, BlockPos pos) { return NULL_AABB; }
     @Override public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess world, BlockPos pos) {
         EnumFacing facing = state.getValue(FACING);
         if (!state.getValue(WALL)) return facing.getAxis() == EnumFacing.Axis.Z
@@ -102,9 +102,9 @@ public final class Thermometer extends BlockHorizontal {
     }
     private static final class ThermometerItem extends ItemBlock {
         ThermometerItem() { super(BLOCK); }
-        @Override public ActionResult<ItemStack> onItemRightClick(ItemStack stack, World world, EntityPlayer player, EnumHand hand) {
+        @Override public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer player, EnumHand hand) {
             read(world, zone.moddev.mc.skysrealisticweather.game.ClimateReadout.eyes(player), player);
-            return new ActionResult<>(EnumActionResult.SUCCESS, stack);
+            return new ActionResult<>(EnumActionResult.SUCCESS, player.getHeldItem(hand));
         }
     }
 }

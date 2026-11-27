@@ -28,7 +28,7 @@ assumptions](docs/TESTING_ASSUMPTIONS.md).
 
 Natural plant growth also follows local temperature. Cool-weather crops, warm
 crops and fruit use editable profiles; fertiliser keeps its native behaviour.
-Optional integrations cover HarvestCraft, AgriCraft, Mystical Agriculture and
+Optional integrations cover HarvestCraft, Mystical Agriculture and
 Forestry. Hover seeds, saplings and crops to see preferred temperatures and
 whether the current local temperature suits them. Celsius is the default;
 choose Fahrenheit through **Config → Display / units**. See
@@ -58,9 +58,13 @@ body temperature and survival systems. JEI, Hwyla and The One Probe provide
 crop climate information. Operator validation and JSON reports help diagnose
 pack rules. See [modpack support](docs/PACK_SUPPORT.md).
 
+This is the local **1.11.2 port**, version **0.1.21.111021**. See the
+[port status and integration matrix](docs/PORTING_1_11_2.md) for tested builds
+and remaining acceptance checks.
+
 ## Install
 
-Use Minecraft **1.10.2**, Forge **12.18.3.2511** and **Java 8**. Put the main jar
+Use Minecraft **1.11.2**, Forge **13.20.1.2588** and **Java 8**. Put the main jar
 in the `mods` folder on both the client and the server. The mod works in
 single-player, LAN and dedicated-server worlds. It has no required content mods.
 

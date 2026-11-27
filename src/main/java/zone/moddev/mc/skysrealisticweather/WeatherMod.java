@@ -20,8 +20,8 @@ import zone.moddev.mc.skysrealisticweather.network.WeatherMessage;
 import zone.moddev.mc.skysrealisticweather.network.WeatherAdminMessage;
 
 @Mod(modid = BuildInfo.ID, name = BuildInfo.NAME, version = BuildInfo.VERSION,
-        acceptedMinecraftVersions = "[1.10.2]", acceptableRemoteVersions = "[" + BuildInfo.VERSION + "]",
-        dependencies = "required-after:Forge@[12.18.3.2511,);after:MineTweaker3;after:ToughAsNails;after:Waila;after:theoneprobe;after:JEI",
+        acceptedMinecraftVersions = "[1.11.2]", acceptableRemoteVersions = "[" + BuildInfo.VERSION + "]",
+        dependencies = "required-after:forge@[13.20.1.2588,);after:crafttweaker;after:toughasnails;after:waila;after:theoneprobe;after:jei",
         guiFactory = "zone.moddev.mc.skysrealisticweather.client.WeatherGuiFactory")
 public final class WeatherMod {
     public static final SimpleNetworkWrapper NETWORK = NetworkRegistry.INSTANCE.newSimpleChannel(BuildInfo.ID);

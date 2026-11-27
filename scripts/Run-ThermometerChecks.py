@@ -14,8 +14,8 @@ output=args.output.resolve(); output.mkdir(parents=True,exist_ok=True)
 version=re.search(r'^mod_version=(.+)$',(project/'gradle.properties').read_text(),re.M).group(1)
 main=project/('build/libs/SkysRealisticWeather-'+version+'.jar')
 probe=project/'build/verification/probe/skyweather-probe.jar'
-providers=project/'build/verification/thermometer/providers'
-extra=[] if args.profile=='vanilla' else [providers/'base-metals-240967-9280029.jar',providers/'mmd-orespawn-245586-9518063.jar']
+providers=project/'build/compatibility-mods/published'
+extra=[] if args.profile=='vanilla' else [providers/'BaseMetals.jar',providers/'OreSpawn.jar']
 digest=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
 build=json.loads((project/'build/verification/probe/probe-build.json').read_text())
 assert digest(main)==build['main_sha256'] and digest(probe)==build['probe_sha256'],'Rebuild candidate/probe first'
@@ -27,9 +27,9 @@ for path in output.glob('*.json'):
     assert old['main_sha256']==digest(main) and old['probe_sha256']==digest(probe) and old['profile']==args.profile and old.get('check','thermometer')==args.check,'Candidate/profile changed'
 if args.phase=='reload':assert json.loads((output/'contracts.json').read_text())['passed'],'Reload requires passing contracts'
 directory=output/'server'; (directory/'mods').mkdir(parents=True,exist_ok=True)
-fixture=project/'build/verification/worldgen-performance/whole-chunk-v1/1-vanilla'
+fixture=project/'build/verification/runtime-fixture'
 forge=next(fixture.glob('forge-*-universal.jar')).name
-for name in [forge,'minecraft_server.1.10.2.jar','eula.txt','ops.json','whitelist.json','banned-ips.json','banned-players.json']:
+for name in [forge,'minecraft_server.1.11.2.jar','eula.txt','ops.json','whitelist.json','banned-ips.json','banned-players.json']:
     if not (directory/name).exists():shutil.copy2(fixture/name,directory/name)
 if not (directory/'libraries').exists():
     quote=lambda p:"'"+str(p).replace("'","''")+"'"

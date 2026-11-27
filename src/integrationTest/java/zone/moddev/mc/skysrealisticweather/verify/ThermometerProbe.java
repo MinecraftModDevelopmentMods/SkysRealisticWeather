@@ -47,7 +47,7 @@ public final class ThermometerProbe {
         grid.setInventorySlotContents(1, glass.copy()); grid.setInventorySlotContents(4, glass.copy()); grid.setInventorySlotContents(7, metal.copy());
         return CraftingManager.getInstance().findMatchingRecipe(grid, world);
     }
-    private static boolean thermometer(ItemStack stack) { return stack != null && stack.getItem() == Item.getItemFromBlock(Thermometer.BLOCK) && stack.stackSize == 1; }
+    private static boolean thermometer(ItemStack stack) { return stack != null && stack.getItem() == Item.getItemFromBlock(Thermometer.BLOCK) && stack.getCount() == 1; }
     private static void contracts(WorldServer world) throws Exception {
         Block block = Thermometer.BLOCK; // Use the vanilla owner for inherited-method reobfuscation in this separate probe jar.
         Item item = Item.getItemFromBlock(Thermometer.BLOCK);
@@ -74,17 +74,17 @@ public final class ThermometerProbe {
         require(Thermometer.heldBy(player), "main hand enables instrument HUD");
         player.setHeldItem(EnumHand.MAIN_HAND, new ItemStack(item, 0));
         require(!Thermometer.heldBy(player), "consumed stack does not enable instrument HUD");
-        player.setHeldItem(EnumHand.MAIN_HAND, null); player.setHeldItem(EnumHand.OFF_HAND, new ItemStack(item));
+        player.setHeldItem(EnumHand.MAIN_HAND, ItemStack.EMPTY); player.setHeldItem(EnumHand.OFF_HAND, new ItemStack(item));
         require(Thermometer.heldBy(player), "offhand enables instrument HUD");
-        player.setHeldItem(EnumHand.OFF_HAND, null); player.inventory.setInventorySlotContents(3, new ItemStack(item));
+        player.setHeldItem(EnumHand.OFF_HAND, ItemStack.EMPTY); player.inventory.setInventorySlotContents(3, new ItemStack(item));
         require(!Thermometer.heldBy(player), "inventory alone does not enable instrument HUD");
         world.setBlockState(FLOOR.down(), Blocks.STONE.getDefaultState(), 2); world.setBlockToAir(FLOOR);
         ItemStack held = new ItemStack(item, 2); player.setHeldItem(EnumHand.MAIN_HAND, held);
-        require(item.onItemUse(held, player, world, FLOOR.down(), EnumHand.MAIN_HAND, EnumFacing.UP, .5F, 1, .5F) == EnumActionResult.SUCCESS,
+        require(item.onItemUse(player, world, FLOOR.down(), EnumHand.MAIN_HAND, EnumFacing.UP, .5F, 1, .5F) == EnumActionResult.SUCCESS,
                 "non-operator places standing thermometer");
-        require(held.stackSize == 1 && world.getBlockState(FLOOR).getBlock() == Thermometer.BLOCK && !world.getBlockState(FLOOR).getValue(Thermometer.WALL), "standing item consumed and correct state");
+        require(held.getCount() == 1 && world.getBlockState(FLOOR).getBlock() == Thermometer.BLOCK && !world.getBlockState(FLOOR).getValue(Thermometer.WALL), "standing item consumed and correct state");
         world.setBlockState(WALL.south(), Blocks.STONE.getDefaultState(), 2); world.setBlockToAir(WALL);
-        require(item.onItemUse(held, player, world, WALL.south(), EnumHand.MAIN_HAND, EnumFacing.NORTH, .5F, .5F, 0) == EnumActionResult.SUCCESS,
+        require(item.onItemUse(player, world, WALL.south(), EnumHand.MAIN_HAND, EnumFacing.NORTH, .5F, .5F, 0) == EnumActionResult.SUCCESS,
                 "non-operator places wall thermometer");
         require(world.getBlockState(WALL).getValue(Thermometer.WALL) && world.getBlockState(WALL).getValue(BlockHorizontal.FACING) == EnumFacing.NORTH, "wall mount faces outward");
         require(!block.canPlaceBlockOnSide(world, WALL, EnumFacing.DOWN), "no ceiling placement");
@@ -98,11 +98,11 @@ public final class ThermometerProbe {
         for (TemperatureDisplay.Unit unit : TemperatureDisplay.Unit.values()) {
             new TemperaturePreferenceMessage(unit).apply(player); messages.clear();
             IBlockState state = world.getBlockState(FLOOR);
-            require(block.onBlockActivated(world, FLOOR, state, player, EnumHand.MAIN_HAND, null, EnumFacing.NORTH, .5F, .5F, 0), "non-operator reads placed thermometer");
+            require(block.onBlockActivated(world, FLOOR, state, player, EnumHand.MAIN_HAND, EnumFacing.NORTH, .5F, .5F, 0), "non-operator reads placed thermometer");
             require(messages.size() == 1 && messages.get(0).contains(unit.symbol), "placed reading follows user units");
             messages.clear();
-            ItemStack hand = new ItemStack(item);
-            require(item.onItemRightClick(hand, world, player, EnumHand.OFF_HAND).getType() == EnumActionResult.SUCCESS && hand.stackSize == 1, "hand use does not consume item");
+            ItemStack hand = new ItemStack(item); player.setHeldItem(EnumHand.OFF_HAND, hand);
+            require(item.onItemRightClick(world, player, EnumHand.OFF_HAND).getType() == EnumActionResult.SUCCESS && hand.getCount() == 1, "hand use does not consume item");
             require(messages.size() == 1 && messages.get(0).contains(unit.symbol), "hand reading follows user units");
         }
         List<ItemStack> drops = block.getDrops(world, FLOOR, world.getBlockState(FLOOR), 0);
@@ -115,7 +115,7 @@ public final class ThermometerProbe {
         BlockPos far = new BlockPos(800008, 81, 800008);
         require(!world.isBlockLoaded(far, false) && !Thermometer.temperature(world, far).isPresent() && !world.isBlockLoaded(far, false), "measurement never loads terrain");
         require(Math.abs(Thermometer.gauge(.15F) - .4F) < .00001 && Thermometer.gauge(-5) == 0 && Thermometer.gauge(5) == 1, "HUD gauge endpoints and freezing point");
-        WorldServer nether = world.getMinecraftServer().worldServerForDimension(-1); nether.getChunkFromBlockCoords(FLOOR);
+        WorldServer nether = world.getMinecraftServer().getWorld(-1); nether.getChunkFromBlockCoords(FLOOR);
         require(!WeatherApi.getTemperature(nether, FLOOR).isPresent() && Thermometer.temperature(nether, FLOOR).getAsDouble() == nether.getBiome(FLOOR).getFloatTemperature(FLOOR), "native biome fallback outside weather dimensions");
         new File("thermometer").mkdirs();
         Files.write(new File("thermometer/saved.txt").toPath(), "standing and north wall".getBytes(StandardCharsets.UTF_8));

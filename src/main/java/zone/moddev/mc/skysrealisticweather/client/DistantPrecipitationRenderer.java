@@ -39,7 +39,7 @@ public final class DistantPrecipitationRenderer {
         int requested = WeatherConfiguration.distantWeatherDistance();
         if (game.world == null || camera == null || requested == 0 || frame == null || !frame.active()
                 || game.world.provider.getWeatherRenderer() != null || frame.currentEpisode() == null
-                        && frame.scheduled || game.world.provider.hasNoSky()) {
+                        && frame.scheduled || !game.world.provider.hasSkyLight()) {
             field.clear(); world = null; return;
         }
         float strength = frame.regionalSchedule() ? 1 : game.world.getRainStrength(event.getPartialTicks());

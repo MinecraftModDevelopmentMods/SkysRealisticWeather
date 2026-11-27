@@ -30,7 +30,7 @@ public final class PlantItems {
     }
 
     public static List<Plant> resolve(ItemStack stack, World world, BlockPos pos) {
-        if (stack == null || stack.getItem() == null || stack.stackSize <= 0) return Collections.emptyList();
+        if (stack == null || stack.isEmpty()) return Collections.emptyList();
         Item item = stack.getItem();
         try {
             if (net.minecraftforge.fml.common.Loader.isModLoaded("agricraft") &&
@@ -103,7 +103,7 @@ public final class PlantItems {
         produce = index;
     }
     private static void add(Map<Item, Map<Integer, List<Plant>>> index, Item item, int meta, Plant plant) {
-        if (item != null) index.computeIfAbsent(item, ignored -> new HashMap<>()).computeIfAbsent(meta, ignored -> new ArrayList<>()).add(plant);
+        if (item != null && item != Items.AIR) index.computeIfAbsent(item, ignored -> new HashMap<>()).computeIfAbsent(meta, ignored -> new ArrayList<>()).add(plant);
     }
     private static void warn(Class<?> type, Throwable problem) {
         if (warned.add(type)) LogManager.getLogger("Sky's Realistic Weather").warn("Cannot resolve plant tooltip for {}", type.getName(), problem);

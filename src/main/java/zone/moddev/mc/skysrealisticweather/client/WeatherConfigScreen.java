@@ -158,11 +158,11 @@ public final class WeatherConfigScreen extends GuiScreen {
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         drawDefaultBackground();
         presetList.drawScreen(mouseX, mouseY, partialTicks);
-        drawCenteredString(fontRendererObj, managing ? "Manage Weather Presets" : BuildInfo.NAME,
+        drawCenteredString(fontRenderer, managing ? "Manage Weather Presets" : BuildInfo.NAME,
                 width / 2, 12, 0xFFFFFF);
         Preset active = WeatherConfiguration.preset(WeatherConfiguration.activePreset());
         String current = active == null ? "Custom" : active.label;
-        drawCenteredString(fontRendererObj, fit("Active  " + current, width - 24),
+        drawCenteredString(fontRenderer, fit("Active  " + current, width - 24),
                 width / 2, 29, 0xD6E5F3);
         drawPreview();
         super.drawScreen(mouseX, mouseY, partialTicks);
@@ -173,21 +173,21 @@ public final class WeatherConfigScreen extends GuiScreen {
         int center = width / 2;
         int top = presetList.bottom + 7;
         if (preview != null) {
-            drawCenteredString(fontRendererObj, fit(preview.label + "  |  " + preview.profile.daysInYear()
+            drawCenteredString(fontRenderer, fit(preview.label + "  |  " + preview.profile.daysInYear()
                     + " Minecraft days", width - 24), center, top, 0xFFFFFF);
-            List<String> lines = fontRendererObj.listFormattedStringToWidth(preview.description, width - 28);
+            List<String> lines = fontRenderer.listFormattedStringToWidth(preview.description, width - 28);
             for (int index = 0; index < Math.min(lines.size(), 2); index++) {
                 String line = lines.get(index);
                 if (index == 1 && lines.size() > 2) line = fit(line + "...", width - 28);
-                drawCenteredString(fontRendererObj, line, center, top + 13 + index * 10, 0xD6E5F3);
+                drawCenteredString(fontRenderer, line, center, top + 13 + index * 10, 0xD6E5F3);
             }
             drawPhasePair(preview, Season.SPRING, Season.SUMMER, top + 37);
             drawPhasePair(preview, Season.AUTUMN, Season.WINTER, top + 48);
         } else {
             String text = presetList.rows.isEmpty() ? "Create a preset in Manage Presets." : "Select a preset to preview it.";
-            drawCenteredString(fontRendererObj, text, center, top + 18, 0xD6E5F3);
+            drawCenteredString(fontRenderer, text, center, top + 18, 0xD6E5F3);
         }
-        drawCenteredString(fontRendererObj, "Changes take effect after restarting Minecraft.",
+        drawCenteredString(fontRenderer, "Changes take effect after restarting Minecraft.",
                 center, height - 38, 0xBBBBBB);
     }
 
@@ -196,13 +196,13 @@ public final class WeatherConfigScreen extends GuiScreen {
         for (Season season : new Season[] {first, second}) {
             String phase = preset.phaseLabel(season) + " (" + preset.profile.period(season.ordinal()).days + " days)";
             int center = width / 2 + (season == first ? -column / 2 : column / 2);
-            drawCenteredString(fontRendererObj, fit(phase, column - 4), center, y, 0xD6E5F3);
+            drawCenteredString(fontRenderer, fit(phase, column - 4), center, y, 0xD6E5F3);
         }
     }
 
     private String fit(String text, int pixels) {
-        if (fontRendererObj.getStringWidth(text) <= pixels) return text;
-        return fontRendererObj.trimStringToWidth(text, pixels - fontRendererObj.getStringWidth("...")) + "...";
+        if (fontRenderer.getStringWidth(text) <= pixels) return text;
+        return fontRenderer.trimStringToWidth(text, pixels - fontRenderer.getStringWidth("...")) + "...";
     }
 
     private final class PresetList extends GuiSlot {
@@ -256,13 +256,13 @@ public final class WeatherConfigScreen extends GuiScreen {
         protected void drawSlot(int index, int x, int y, int slotHeight, int mouseX, int mouseY) {
             Row row = rows.get(index);
             if (row.preset == null) {
-                drawString(fontRendererObj, row.label, x + 4, y + 4, 0x9DC4E1);
+                drawString(fontRenderer, row.label, x + 4, y + 4, 0x9DC4E1);
                 return;
             }
             boolean active = row.preset.id.equals(WeatherConfiguration.activePreset());
-            int reserve = active ? fontRendererObj.getStringWidth("Active") + 18 : 12;
-            drawString(fontRendererObj, fit(row.label, getListWidth() - reserve), x + 9, y + 4, 0xFFFFFF);
-            if (active) drawString(fontRendererObj, "Active", x + getListWidth() - reserve + 8, y + 4, 0xB7DB98);
+            int reserve = active ? fontRenderer.getStringWidth("Active") + 18 : 12;
+            drawString(fontRenderer, fit(row.label, getListWidth() - reserve), x + 9, y + 4, 0xFFFFFF);
+            if (active) drawString(fontRenderer, "Active", x + getListWidth() - reserve + 8, y + 4, 0xB7DB98);
         }
 
         void moveSelection(int direction) {

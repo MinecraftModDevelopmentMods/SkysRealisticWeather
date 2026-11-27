@@ -39,9 +39,9 @@ public final class ThermometerHud {
             Gui.drawRect(x + 8, y + 28 - level, x + 12, y + 28, 0xFFD5E4ED);
         }
         for (int mark = 0; mark <= 4; mark++) Gui.drawRect(x + 14, y + 6 + mark * 5, x + 17, y + 7 + mark * 5, 0xFFA9BBC7);
-        game.fontRendererObj.drawStringWithShadow(I18n.format("hud.skysrealisticweather.temperature"), x + 21, y + 4, 0xC9D8E2);
-        game.fontRendererObj.drawStringWithShadow(reading.isPresent() ? TemperatureDisplay.format((float) reading.getAsDouble()) : "--", x + 21, y + 16, 0xFFFFFF);
-        game.fontRendererObj.drawStringWithShadow(I18n.format(held ? "hud.skysrealisticweather.here" : "hud.skysrealisticweather.placed"), x + 21, y + 27, 0x91A5B4);
+        game.fontRenderer.drawStringWithShadow(I18n.format("hud.skysrealisticweather.temperature"), x + 21, y + 4, 0xC9D8E2);
+        game.fontRenderer.drawStringWithShadow(reading.isPresent() ? TemperatureDisplay.format((float) reading.getAsDouble()) : "--", x + 21, y + 16, 0xFFFFFF);
+        game.fontRenderer.drawStringWithShadow(I18n.format(held ? "hud.skysrealisticweather.here" : "hud.skysrealisticweather.placed"), x + 21, y + 27, 0x91A5B4);
         GlStateManager.color(1, 1, 1, 1);
     }
     @SubscribeEvent

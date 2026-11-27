@@ -68,13 +68,13 @@ repositories {
 }
 
 dependencies {
-    compileOnly 'curse.maven:crafttweaker-239197:2433444'
-    compileOnly('maven.modrinth:ge1sOdFH:9sk3Ji4h') { transitive = false }
-    compileOnly 'curse.maven:jei-238222:2428966'
-    compileOnly 'curse.maven:hwyla-253449:2433252'
+    compileOnly 'curse.maven:crafttweaker-239197:2838724'
+    compileOnly('maven.modrinth:ge1sOdFH:rVR7XpTd') { transitive = false }
+    compileOnly 'curse.maven:jei-238222:2461378'
+    compileOnly 'curse.maven:hwyla-253449:2496989'
     compileOnly 'curse.maven:the-one-probe-245211:2496984'
-    compileOnly 'curse.maven:realistic-terrain-generation-237989:2550453'
-    compileOnly 'curse.maven:open-terrain-generator-265894:2439892'
+    compileOnly 'curse.maven:forestry-59751:2542509'
+    compileOnly 'curse.maven:open-terrain-generator-265894:2530369'
     implementation minecraft.dependency("net.minecraftforge:forge:${minecraft_version}-${forge_version}")
     constraints {
         implementation('org.lwjgl.lwjgl:lwjgl:2.9.4-nightly-20150209') {
@@ -86,7 +86,7 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.2'
 }
 
-def mergedOutput = layout.buildDirectory.dir('forge10-development/main')
+def mergedOutput = layout.buildDirectory.dir('forge11-development/main')
 def syncDevelopmentOutput = tasks.register('syncDevelopmentOutput', Sync) {
     dependsOn tasks.named('classes')
     from sourceSets.main.output

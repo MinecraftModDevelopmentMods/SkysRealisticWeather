@@ -14,33 +14,33 @@ import zone.moddev.mc.skysrealisticweather.network.WeatherMessage;
 import zone.moddev.mc.skysrealisticweather.climate.*;
 import zone.moddev.mc.skysrealisticweather.api.WeatherKind;
 
-@Mod(modid="weatherpackprobe",name="Weather Pack Checks",version="1",dependencies="required-after:skysrealisticweather;after:MineTweaker3")
+@Mod(modid="weatherpackprobe",name="Weather Pack Checks",version="1",dependencies="required-after:skysrealisticweather;after:crafttweaker")
 public final class PackSupportProbe {
     private static int checks;
     public static void require(boolean value,String name) { checks++;if(!value)throw new IllegalStateException(name); }
     @Mod.EventHandler public void started(FMLServerStartedEvent event) {
         if(!Boolean.getBoolean("pack.probe"))return;
         MinecraftServer server=FMLCommonHandler.instance().getMinecraftServerInstance();
-        WorldServer world=server.worldServerForDimension(0);
+        WorldServer world=server.getWorld(0);
         try {
             boolean reload=Boolean.getBoolean("pack.reload");
             String profile=System.getProperty("pack.profile","core");
             boolean combined=profile.equals("combined")||profile.equals("full");
             boolean disabled=Boolean.getBoolean("pack.disabled");
-            if(profile.equals("tan")||combined)require(Loader.isModLoaded("ToughAsNails"),"requested legacy TAN is loaded");
-            if(profile.equals("crafttweaker")||combined)require(Loader.isModLoaded("MineTweaker3"),"requested CraftTweaker is loaded");
-            if(profile.equals("jei")||combined)require(Loader.isModLoaded("JEI"),"requested JEI is loaded");
-            if(profile.equals("hwyla")||combined)require(Loader.isModLoaded("Waila"),"requested Hwyla is loaded");
+            if(profile.equals("tan")||combined)require(Loader.isModLoaded("toughasnails"),"requested legacy TAN is loaded");
+            if(profile.equals("crafttweaker")||combined)require(Loader.isModLoaded("crafttweaker"),"requested CraftTweaker is loaded");
+            if(profile.equals("jei")||combined)require(Loader.isModLoaded("jei"),"requested JEI is loaded");
+            if(profile.equals("hwyla")||combined)require(Loader.isModLoaded("waila"),"requested Hwyla is loaded");
             if(profile.equals("top")||combined)require(Loader.isModLoaded("theoneprobe"),"requested TOP is loaded");
-            if(profile.equals("full"))for(String mod:new String[]{"harvestcraft","agricraft","mysticalagriculture","forestry"})require(Loader.isModLoaded(mod),"requested farming mod "+mod+" is loaded");
+            if(profile.equals("full"))for(String mod:new String[]{"harvestcraft","mysticalagriculture","forestry"})require(Loader.isModLoaded(mod),"requested farming mod "+mod+" is loaded");
             if(disabled) {
                 require(Integrations.status().values().stream().allMatch(value->value.equals("disabled")||value.equals("absent")),"optional bridges disabled independently of installed mods");
                 require(ScriptRules.crops().isEmpty()&&ScriptRules.biomes().isEmpty(),"disabled script bridge leaves native rules");
             }
-            if(!disabled&&Loader.isModLoaded("Waila"))Class.forName("zone.moddev.mc.skysrealisticweather.verify.pack.WailaChecks").getMethod("run",WorldServer.class).invoke(null,world);
+            if(!disabled&&Loader.isModLoaded("waila"))Class.forName("zone.moddev.mc.skysrealisticweather.verify.pack.WailaChecks").getMethod("run",WorldServer.class).invoke(null,world);
             if(!disabled&&Loader.isModLoaded("theoneprobe"))Class.forName("zone.moddev.mc.skysrealisticweather.verify.pack.TopChecks").getMethod("run",WorldServer.class).invoke(null,world);
-            if(!disabled&&Loader.isModLoaded("ToughAsNails"))Class.forName("zone.moddev.mc.skysrealisticweather.verify.pack.TanChecks").getMethod("run",WorldServer.class).invoke(null,world);
-            if(!disabled&&Loader.isModLoaded("MineTweaker3")) {
+            if(!disabled&&Loader.isModLoaded("toughasnails"))Class.forName("zone.moddev.mc.skysrealisticweather.verify.pack.TanChecks").getMethod("run",WorldServer.class).invoke(null,world);
+            if(!disabled&&Loader.isModLoaded("crafttweaker")) {
                 require(!ScriptRules.crops().isEmpty(),"startup scripts captured before gameplay");
                 require(ServerWeather.INSTANCE.settings().farming.resolve("minecraft:wheat",Blocks.WHEAT.getDefaultState()).profile.exempt!=reload,"active script crop policy");
                 require(ServerWeather.INSTANCE.settings().biomes.preset(Biomes.PLAINS).id.equals("tropical_monsoon"),"scripts override generated biome config");

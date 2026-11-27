@@ -14,7 +14,7 @@ import zone.moddev.mc.skysrealisticweather.climate.WeatherConfiguration;
 import zone.moddev.mc.skysrealisticweather.game.CropPresentation;
 
 public final class WailaProvider implements IWailaDataProvider {
-    public static void register(){FMLInterModComms.sendMessage("Waila","register",WailaProvider.class.getName()+".register");}
+    public static void register(){FMLInterModComms.sendMessage("waila","register",WailaProvider.class.getName()+".register");}
     public static void register(IWailaRegistrar registrar) {
         WailaProvider provider=new WailaProvider();registrar.registerBodyProvider(provider,Block.class);registrar.registerNBTProvider(provider,Block.class);
         Integrations.ready("waila");

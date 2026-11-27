@@ -15,7 +15,7 @@ import zipfile
 
 project = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument('--profile', choices=['vanilla','harvestcraft','agricraft','mystical','forestry','combined'], default='vanilla')
+parser.add_argument('--profile', choices=['vanilla','harvestcraft','mystical','forestry','combined'], default='vanilla')
 parser.add_argument('--phase', choices=['contracts','reload','endurance','performance'], default='contracts')
 parser.add_argument('--years', type=int, default=5)
 parser.add_argument('--seeds', type=int, nargs='+', default=[123948,70289,91173])
@@ -26,13 +26,12 @@ version = re.search(r'^mod_version=(.+)$', (project/'gradle.properties').read_te
 args.jar = project/('build/libs/SkysRealisticWeather-'+version+'.jar')
 output = args.output.resolve()
 output.mkdir(parents=True, exist_ok=True)
-review = project/'build/verification/plant-growth-review'
-profiles = dict(harvestcraft=["Pam's HarvestCraft 1.10.2j.jar"],
-    agricraft=['agricraft-2.0.0-0.11.0-a21.jar','infinitylib-0.11.0.jar'],
-    mystical=['mysticalagriculture-1.10.2-1.5.10.jar'], forestry=['forestry_1.10.2-5.2.17.388.jar'], vanilla=[])
-profiles['combined'] = sum([profiles[k] for k in ['harvestcraft','agricraft','mystical','forestry']], [])
+review = project/'build/compatibility-mods/published'
+profiles = dict(harvestcraft=["HarvestCraft.jar"],
+    mystical=['MysticalAgriculture.jar'], forestry=['Forestry.jar'], vanilla=[])
+profiles['combined'] = sum([profiles[k] for k in ['harvestcraft','mystical','forestry']], [])
 extra_mods = [review/name for name in profiles[args.profile]]
-fixture = project/'build/verification/worldgen-performance/whole-chunk-v1/1-vanilla'
+fixture = project/'build/verification/runtime-fixture'
 probe = project/'build/verification/probe/skyweather-probe.jar'
 java = Path.home()/'.gradle/jdks/temurin-8-amd64-windows.2/bin/java.exe'
 forge = next(fixture.glob('forge-*-universal.jar')).name
@@ -58,7 +57,7 @@ def digest(path):
 
 def prepare(directory):
     (directory/'mods').mkdir(parents=True, exist_ok=True)
-    for name in [forge, 'minecraft_server.1.10.2.jar', 'eula.txt', 'ops.json',
+    for name in [forge, 'minecraft_server.1.11.2.jar', 'eula.txt', 'ops.json',
                  'whitelist.json', 'banned-ips.json', 'banned-players.json']:
         if not (directory/name).exists():
             shutil.copy2(fixture/name, directory/name)

@@ -51,7 +51,7 @@ public final class ToughAsNailsBridge {
             if(!active(candidate)){close();return;}
             world=candidate;
             if(seasonOption==null) {
-                SyncedConfig.SyncedConfigEntry option=SyncedConfig.optionsToSync.get(GameplayOption.ENABLE_SEASONS.getOptionName());
+                SyncedConfig.SyncedConfigEntry option=SyncedConfig.optionsToSync.get(SeasonsOption.ENABLE_SEASONS.getOptionName());
                 if(option==null)throw new IllegalStateException("TAN seasons option is unavailable");
                 seasonOption=option;previousSeasons=option.value;option.value="false";
                 synchronize();
@@ -60,7 +60,7 @@ public final class ToughAsNailsBridge {
     }
     private static void synchronize() {
         NBTTagCompound values=new NBTTagCompound();
-        values.setString(GameplayOption.ENABLE_SEASONS.getOptionName(),seasonOption.value);
+        values.setString(SeasonsOption.ENABLE_SEASONS.getOptionName(),seasonOption.value);
         PacketHandler.instance.sendToAll(new MessageSyncConfigs(values));
     }
     public static void close() {
@@ -95,7 +95,7 @@ public final class ToughAsNailsBridge {
             Optional<TemperatureSample> local=WeatherApi.getTemperatureSample(player.world,pos);
             ITemperature data=TemperatureHelper.getTemperatureData(player);
             if(!local.isPresent()||data==null){remove(player);return;}
-            Temperature baseline=new Temperature(TemperatureHandler.TEMPERATURE_SCALE_MIDPOINT);
+            Temperature baseline=new Temperature(TemperatureScale.getScaleMidpoint());
             baseline=BIOME.modifyTarget(player.world,player,baseline);
             baseline=ALTITUDE.modifyTarget(player.world,player,baseline);
             baseline=TIME.modifyTarget(player.world,player,baseline);
@@ -103,7 +103,7 @@ public final class ToughAsNailsBridge {
             baseline=SEASON.modifyTarget(player.world,player,baseline);
             int target=ambientTarget(local.get().temperature);
             int correction=target-baseline.getRawValue();
-            // TAN 1.1.1 refreshes an existing modifier's expiry but retains its old amount/rate.
+            // TAN refreshes an existing modifier's expiry but retains its old amount/rate.
             TemperatureModifier.ExternalModifier own=data.getExternalModifiers().get(MODIFIER);
             if(own!=null&&(own.getAmount()!=correction||own.getRate()!=0))remove(player);
             data.applyModifier(MODIFIER,correction,0,40);
@@ -112,7 +112,7 @@ public final class ToughAsNailsBridge {
     public static int ambientTarget(float minecraftTemperature) {
         if(!Float.isFinite(minecraftTemperature))throw new IllegalArgumentException("Invalid ambient temperature");
         float normalized=Math.max(0,Math.min(1.35F,minecraftTemperature))/1.35F;
-        return TemperatureHandler.TEMPERATURE_SCALE_MIDPOINT+Math.round((normalized*2-1)*BiomeModifier.MAX_TEMP_OFFSET);
+        return TemperatureScale.getScaleMidpoint()+Math.round((normalized*2-1)*BiomeModifier.MAX_TEMP_OFFSET);
     }
     private static void remove(EntityPlayer player) {
         ITemperature data=TemperatureHelper.getTemperatureData(player);

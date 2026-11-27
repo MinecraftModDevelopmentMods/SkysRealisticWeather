@@ -1,5 +1,8 @@
 # Weather API, version 8
 
+This guide targets Minecraft 1.11.2. Recompile consumers against the matching
+API and Forge jars; the matching API number does not imply cross-Minecraft binary compatibility.
+
 Use `zone.moddev.mc.skysrealisticweather.api`. The `-api.jar` in `build/libs`
 is the compile-only artifact. Use the main mod jar at runtime.
 Declare Forge loading order after `skysrealisticweather`.
@@ -8,7 +11,7 @@ before loading a separate integration class that references the API.
 
 ```groovy
 dependencies {
-    compileOnly files('libs/SkysRealisticWeather-0.1.21.110021-api.jar')
+    compileOnly files('libs/SkysRealisticWeather-0.1.21.111021-api.jar')
 }
 ```
 
@@ -144,7 +147,7 @@ Only the `api` package is a supported integration surface.
 Register selectors during initialization or post-initialization, on both physical
 sides. Registration freezes at load completion and accepts one profile per
 selector. Server configuration takes priority. A selector may include block state
-properties, or an AgriCraft plant ID. Unregistered, unmapped plants remain native.
+properties. Unregistered, unmapped plants remain native.
 
 ```java
 WeatherApi.registerPlantGrowthProfile("example:tomato",
@@ -169,7 +172,7 @@ again to a growth path already covered by this mod.
 Plant registration is separate from biome registration. During world generation
 use the supplied-biome climate queries and `PlantGrowthProfile.multiplier` if a
 custom generator needs a suitability decision before a plant exists. The runtime
-plant query requires an existing plant, including its state or AgriCraft seed.
+plant query requires an existing plant, including its state.
 See [farming](FARMING.md) for the native hook and fertiliser contracts.
 
 Player-facing displays may use Celsius or Fahrenheit. All API temperature values

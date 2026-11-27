@@ -1,6 +1,6 @@
 package zone.moddev.mc.skysrealisticweather.admin;
 
-import java.util.List;
+import net.minecraft.util.NonNullList;
 import java.util.Random;
 import net.minecraft.block.Block;
 import net.minecraft.block.SoundType;
@@ -27,8 +27,8 @@ public final class WeatherController extends Block {
     public static final WeatherController BLOCK = new WeatherController();
     private static final CreativeTabs ADMIN = new CreativeTabs("skysweatheradmin") {
         @Override
-        public Item getTabIconItem() {
-            return Item.getItemFromBlock(BLOCK);
+        public ItemStack getTabIconItem() {
+            return new ItemStack(BLOCK);
         }
     };
 
@@ -48,13 +48,13 @@ public final class WeatherController extends Block {
     }
 
     @Override
-    public void getSubBlocks(Item item, CreativeTabs tab, List<ItemStack> items) {
+    public void getSubBlocks(Item item, CreativeTabs tab, NonNullList<ItemStack> items) {
         if (WeatherMod.proxy.showAdminItem()) super.getSubBlocks(item, tab, items);
     }
 
     @Override
     public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand,
-                                    ItemStack heldItem, EnumFacing side, float hitX, float hitY, float hitZ) {
+                                    EnumFacing side, float hitX, float hitY, float hitZ) {
         if (hand == EnumHand.MAIN_HAND && !world.isRemote && player instanceof EntityPlayerMP) {
             WeatherCommand.open((EntityPlayerMP) player);
         }
@@ -72,14 +72,14 @@ public final class WeatherController extends Block {
         }
 
         @Override
-        public EnumActionResult onItemUse(ItemStack stack, EntityPlayer player, World world, BlockPos pos,
+        public EnumActionResult onItemUse(EntityPlayer player, World world, BlockPos pos,
                                          EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
             if (!WeatherCommand.permitted(player) || !WeatherState.supports(world)) {
                 if (!world.isRemote) player.sendMessage(new TextComponentString(
                         "Only operators can place the Weather Controller in the Overworld."));
                 return EnumActionResult.FAIL;
             }
-            return super.onItemUse(stack, player, world, pos, hand, facing, hitX, hitY, hitZ);
+            return super.onItemUse(player, world, pos, hand, facing, hitX, hitY, hitZ);
         }
     }
 }

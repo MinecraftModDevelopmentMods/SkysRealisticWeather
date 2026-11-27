@@ -133,11 +133,11 @@ public final class TemperatureZones {
     }
     @SubscribeEvent public void watch(ChunkWatchEvent.Watch event) {
         World world=event.getPlayer().world;State state=state(world,true);ChunkPos p=event.getChunk();
-        WeatherMod.NETWORK.sendTo(new TemperatureZoneMessage(world.provider.getDimension(),p.chunkXPos,p.chunkZPos,state.enabled,state.index.snapshot(p.chunkXPos,p.chunkZPos)),event.getPlayer());
+        WeatherMod.NETWORK.sendTo(new TemperatureZoneMessage(world.provider.getDimension(),p.x,p.z,state.enabled,state.index.snapshot(p.x,p.z)),event.getPlayer());
     }
     @SubscribeEvent public void unwatch(ChunkWatchEvent.UnWatch event) {
         World world=event.getPlayer().world;State state=state(world,false);ChunkPos p=event.getChunk();
-        WeatherMod.NETWORK.sendTo(new TemperatureZoneMessage(world.provider.getDimension(),p.chunkXPos,p.chunkZPos,state==null?WeatherConfiguration.heatingEnabled():state.enabled,Collections.emptyList()),event.getPlayer());
+        WeatherMod.NETWORK.sendTo(new TemperatureZoneMessage(world.provider.getDimension(),p.x,p.z,state==null?WeatherConfiguration.heatingEnabled():state.enabled,Collections.emptyList()),event.getPlayer());
     }
     public static void receive(World world,TemperatureZoneMessage message) {
         if(!world.isRemote||world.provider.getDimension()!=message.dimension)return;

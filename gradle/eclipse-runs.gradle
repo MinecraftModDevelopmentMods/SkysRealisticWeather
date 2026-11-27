@@ -2,65 +2,70 @@ import groovy.xml.XmlParser
 import groovy.xml.XmlUtil
 
 def modCoordinates = [
-        BoP           : 'biomes-o-plenty-220318:2452877',
-        RTG           : 'realistic-terrain-generation-237989:2550453',
-        OTG           : 'open-terrain-generator-265894:2439892',
-        BiomeBundle   : 'biome-bundle-241542:2430752',
+        BoP           : 'biomes-o-plenty-220318:2536549',
+        OTG           : 'open-terrain-generator-265894:2530369',
+        BiomeBundle   : 'biome-bundle-241542:2431190',
         LostCities    : 'the-lost-cities-269024:2497880',
-        CompatLayer   : 'compatlayer-253729:2532012',
+        CompatLayer   : 'compatlayer-253729:2532013',
         GeographiCraft: 'climate-control-geographicraft-76544:2486027',
-        BiomeTweaker  : 'biometweaker-228895:2402226',
-        AbyssalCraft  : 'abyssalcraft-53686:2596856',
-        Thaumcraft    : 'thaumcraft-223628:2546413',
-        Baubles       : 'baubles-227083:2518666',
-        Vampirism     : 'vampirism-become-a-vampire-233029:2555238',
-        HarvestCraft  : 'pams-harvestcraft-221857:2428363',
-        AgriCraft     : 'agricraft-225635:2495110',
-        InfinityLib   : 'infinitylib-251396:2451336',
-        MysticalAgriculture: 'mystical-agriculture-246640:2530121',
-        Forestry      : 'forestry-59751:2476716',
-        BaseMetals    : 'base-metals-240967:9280029',
-        OreSpawn      : 'mmd-orespawn-245586:9518063',
-        CraftTweaker  : 'crafttweaker-239197:2433444',
-        ToughAsNails  : 'maven.modrinth:ge1sOdFH:9sk3Ji4h',
-        JEI           : 'jei-238222:2428966',
-        Hwyla         : 'hwyla-253449:2433252',
+        BiomeTweaker  : 'biometweaker-228895:2478061',
+        AbyssalCraft  : 'abyssalcraft-53686:2596860',
+        Vampirism     : 'vampirism-become-a-vampire-233029:2555244',
+        HarvestCraft  : 'pams-harvestcraft-221857:2410937',
+        MysticalAgriculture: 'mystical-agriculture-246640:2487658',
+        Forestry      : 'forestry-59751:2542509',
+        BaseMetals    : 'base-metals-240967:9541705',
+        OreSpawn      : 'mmd-orespawn-245586:9639128',
+        CraftTweaker  : 'crafttweaker-239197:2838724',
+        ToughAsNails  : 'maven.modrinth:ge1sOdFH:rVR7XpTd',
+        JEI           : 'jei-238222:2461378',
+        Hwyla         : 'hwyla-253449:2496989',
         TheOneProbe   : 'the-one-probe-245211:2496984'
 ]
 def compatibilityProfiles = [
         BoP           : ['BoP'],
-        RTG           : ['RTG'],
         OTG           : ['OTG'],
         BiomeBundle   : ['OTG', 'BiomeBundle'],
         LostCities    : ['LostCities', 'CompatLayer'],
-        RTGBoPGeo     : ['RTG', 'BoP', 'GeographiCraft'],
         GeographiCraft: ['GeographiCraft'],
         BiomeTweaker  : ['BiomeTweaker'],
         AbyssalCraft  : ['AbyssalCraft'],
-        Thaumcraft    : ['Thaumcraft', 'Baubles'],
         Vampirism     : ['Vampirism'],
         HarvestCraft  : ['HarvestCraft'],
-        AgriCraft     : ['InfinityLib', 'AgriCraft'],
         MysticalAgriculture: ['MysticalAgriculture'],
         Forestry      : ['Forestry'],
         BaseMetals    : ['OreSpawn', 'BaseMetals'],
-        Farming       : ['HarvestCraft', 'InfinityLib', 'AgriCraft', 'MysticalAgriculture', 'Forestry'],
+        Farming       : ['HarvestCraft', 'MysticalAgriculture', 'Forestry'],
         CraftTweaker  : ['CraftTweaker'],
         ToughAsNails  : ['ToughAsNails'],
         JEI           : ['JEI'],
         Hwyla         : ['Hwyla'],
         TheOneProbe   : ['CompatLayer', 'TheOneProbe'],
-        PackSupport   : ['CraftTweaker', 'ToughAsNails', 'JEI', 'Hwyla', 'CompatLayer', 'TheOneProbe', 'HarvestCraft', 'InfinityLib', 'AgriCraft', 'MysticalAgriculture', 'Forestry']
+        PackSupport   : ['CraftTweaker', 'ToughAsNails', 'JEI', 'Hwyla', 'CompatLayer', 'TheOneProbe', 'HarvestCraft', 'MysticalAgriculture', 'Forestry']
 ]
 def publishedMods = modCoordinates.collectEntries { name, coordinates ->
     [(name): configurations.detachedConfiguration(dependencies.create(coordinates.startsWith('maven.modrinth:') ? coordinates : "curse.maven:${coordinates}"))]
 }
+// Unmodified author jars for disposable packaged-server checks (never ship these).
+tasks.register('preparePublishedIntegrationMods') {
+    group = 'verification'
+    inputs.files(publishedMods.values())
+    outputs.dir(layout.buildDirectory.dir('compatibility-mods/published'))
+    doLast {
+        publishedMods.each { name, published ->
+            copy {
+                from published
+                into layout.buildDirectory.dir('compatibility-mods/published')
+                rename { "${name}.jar" }
+            }
+        }
+    }
+}
+
 def dependenciesByMod = [
         BiomeBundle: ['OTG'],
-        AgriCraft  : ['InfinityLib'],
         BaseMetals : ['OreSpawn'],
         LostCities : ['CompatLayer'],
-        Thaumcraft : ['Baubles'],
         TheOneProbe: ['CompatLayer']
 ]
 def developmentMods = publishedMods.collectEntries { name, published ->
@@ -81,7 +86,7 @@ def developmentMods = publishedMods.collectEntries { name, published ->
         // Remapped class bytes no longer match the published jar signatures.
         exclude 'META-INF/*.SF', 'META-INF/*.RSA', 'META-INF/*.DSA', 'META-INF/*.EC', 'META-INF/SIG-*'
         filesMatching('META-INF/*_at.cfg') {
-            // Forge 1.10 parses the owner and member as separate tokens.
+            // Forge 1.11 parses the owner and member as separate tokens.
             filter { String line -> line.replaceFirst(/^(\s*\S+\s+[\w\/$]+)\.(?=\S)/, '$1 ') }
         }
     }

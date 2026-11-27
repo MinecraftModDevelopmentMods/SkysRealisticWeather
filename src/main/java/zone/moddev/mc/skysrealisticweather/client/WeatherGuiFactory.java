@@ -18,9 +18,12 @@ public final class WeatherGuiFactory implements IModGuiFactory {
     }
 
     @Override
-    public Class<? extends GuiScreen> mainConfigGuiClass() {
-        return ClimateModeScreen.class;
+    public GuiScreen createConfigGui(GuiScreen parent) {
+        return new ClimateModeScreen(parent);
     }
+
+    @Override
+    public Class<? extends GuiScreen> mainConfigGuiClass() { return ClimateModeScreen.class; }
 
     @Override
     public Set<RuntimeOptionCategoryElement> runtimeGuiCategories() {
@@ -28,9 +31,10 @@ public final class WeatherGuiFactory implements IModGuiFactory {
     }
 
     @Override
-    public RuntimeOptionGuiHandler getHandlerFor(RuntimeOptionCategoryElement element) {
-        return null;
-    }
+    public RuntimeOptionGuiHandler getHandlerFor(RuntimeOptionCategoryElement element) { return null; }
+
+    @Override
+    public boolean hasConfigGui() { return true; }
 
     @SubscribeEvent
     public void onConfigChanged(ConfigChangedEvent.OnConfigChangedEvent event) {

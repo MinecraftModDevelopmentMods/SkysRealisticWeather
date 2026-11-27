@@ -108,25 +108,23 @@ public final class PlantTransformer implements IClassTransformer, Opcodes {
     }
 
     private static void forestry(ClassNode node) {
+        String info = "Lforestry/api/climate/IClimateInfo;";
         int changes = 0;
         for (MethodNode method : node.methods) {
-            boolean temperature = method.name.equals("getTemperature"), humidity = method.name.equals("getHumidity");
-            if ((!temperature && !humidity) || !method.desc.equals("(" + WORLD + POS + ")F")) continue;
-            int calls = 0;
-            for (AbstractInsnNode i : method.instructions.toArray()) if (i instanceof MethodInsnNode) {
-                MethodInsnNode call = (MethodInsnNode) i;
-                if (!call.owner.equals("net/minecraft/world/biome/Biome") || !call.desc.equals("()F")) continue;
-                if (!(temperature ? call.name.equals("getTemperature") || call.name.equals("func_185353_n")
-                        : call.name.equals("getRainfall") || call.name.equals("func_76727_i"))) continue;
+            if (!method.name.equals("getInfo") || !method.desc.equals("(" + WORLD + POS + ")" + info)) continue;
+            for (AbstractInsnNode instruction : method.instructions.toArray()) {
+                if (!(instruction instanceof MethodInsnNode)) continue;
+                MethodInsnNode call = (MethodInsnNode) instruction;
+                if (call.getOpcode() != INVOKESTATIC || !call.owner.equals("forestry/core/climate/BiomeClimateInfo")
+                        || !call.name.equals("getInfo") || !call.desc.equals("(Lnet/minecraft/world/biome/Biome;)Lforestry/core/climate/BiomeClimateInfo;")) continue;
                 InsnList bridge = new InsnList();
                 bridge.add(new VarInsnNode(ALOAD, 1)); bridge.add(new VarInsnNode(ALOAD, 2));
-                bridge.add(new MethodInsnNode(INVOKESTATIC, HOOKS, temperature ? "forestryTemperature" : "forestryHumidity", "(F" + WORLD + POS + ")F", false));
+                bridge.add(new MethodInsnNode(INVOKESTATIC, "zone/moddev/mc/skysrealisticweather/compat/ForestryClimate",
+                        "ambient", "(" + info + WORLD + POS + ")" + info, false));
                 method.instructions.insert(call, bridge);
-                calls++;
+                changes++;
             }
-            if (calls != 1) throw new IllegalArgumentException("Forestry ambient fallback differs");
-            changes++;
         }
-        if (changes != 2) throw new IllegalArgumentException("Forestry climate signatures differ");
+        if (changes != 1) throw new IllegalArgumentException("Forestry ambient climate fallback differs");
     }
 }

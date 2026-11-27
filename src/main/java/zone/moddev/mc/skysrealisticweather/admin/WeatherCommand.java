@@ -307,7 +307,7 @@ public final class WeatherCommand extends CommandBase {
             net.minecraft.util.math.Vec3d eye = new net.minecraft.util.math.Vec3d(player.posX, player.posY + player.getEyeHeight(), player.posZ);
             net.minecraft.util.math.Vec3d look = player.getLook(1);
             net.minecraft.util.math.RayTraceResult hit = weather.world().rayTraceBlocks(eye,
-                    eye.addVector(look.xCoord * 6, look.yCoord * 6, look.zCoord * 6), false, false, true);
+                    eye.addVector(look.x * 6, look.y * 6, look.z * 6), false, false, true);
             if (hit == null || hit.getBlockPos() == null) throw new CommandException("Look at a plant or supply coordinates.");
             position = hit.getBlockPos();
         } else throw new WrongUsageException("/skyweather crop <x y z>");

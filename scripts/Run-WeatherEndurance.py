@@ -42,7 +42,7 @@ if args.phase in ['all','runtime'] and args.native_days <= args.warmup_days:
 output = args.output or project/'build/verification/weather-endurance'/datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
 output = output.resolve()
 output.mkdir(parents=True, exist_ok=True)
-fixture = project/'build/verification/worldgen-performance/whole-chunk-v1/1-vanilla'
+fixture = project/'build/verification/runtime-fixture'
 probe = project/'build/verification/probe/skyweather-probe.jar'
 java = Path.home()/'.gradle/jdks/temurin-8-amd64-windows.2/bin/java.exe'
 forge = next(fixture.glob('forge-*-universal.jar')).name
@@ -68,7 +68,7 @@ def digest(path):
 
 def prepare(directory):
     (directory/'mods').mkdir(parents=True, exist_ok=True)
-    for name in [forge, 'minecraft_server.1.10.2.jar', 'eula.txt', 'ops.json',
+    for name in [forge, 'minecraft_server.1.11.2.jar', 'eula.txt', 'ops.json',
                  'whitelist.json', 'banned-ips.json', 'banned-players.json']:
         if not (directory/name).exists():
             shutil.copy2(fixture/name, directory/name)

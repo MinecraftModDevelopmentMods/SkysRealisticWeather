@@ -1,4 +1,4 @@
-# Modpack support (Minecraft 1.10.2)
+# Modpack support (Minecraft 1.11.2)
 
 All integrations are optional. Install their original jars alongside Sky's
 Realistic Weather; none are bundled. The `integrations` config category can
@@ -9,7 +9,7 @@ cover CraftTweaker, ToughAsNails, JEI, Hwyla, TheOneProbe and PackSupport
 
 ## CraftTweaker 3
 
-Target: CraftTweaker 1.10.2 **3.0.26** (legacy `MineTweaker3`). Example:
+Target: CraftTweaker 1.11.2 **3.1.0-legacy** (`crafttweaker`). Example:
 
 ```zenscript
 import mods.skysrealisticweather.Climate;
@@ -33,7 +33,7 @@ changed definitions are held pending its next restart. Weather, existing crop
 rules and connected clients keep the active snapshot. `/skyweather validate`
 reports pending changes. An unchanged reload does not require a restart.
 
-CraftTweaker 3.0.26 runs its initial scripts **after spawn terrain preparation**.
+CraftTweaker 3 runs its initial scripts **after spawn terrain preparation**.
 Script biome mappings apply before gameplay and to subsequently generated
 chunks. Put mappings needed for initial spawn generation in
 `biome_climates` in Sky's config. Existing terrain is never regenerated.
@@ -79,7 +79,7 @@ on an existing world. The default calendar remains 365 Minecraft days.
 
 ## Tough As Nails
 
-Target: **Tough As Nails 1.9.4-1.1.1** on Minecraft 1.10.2. When present, the
+Target: **Tough As Nails 1.11.2-2.1.0.65** on Minecraft 1.11.2. When present, the
 bridge uses Sky's effective local temperature, including registered heated
 zones and burning furnaces, as TAN's ambient target. TAN retains its body
 temperature, response timer, clothing, wetness, proximity and other modifiers,
@@ -97,7 +97,7 @@ native TAN behaviour. An incompatible bridge disables itself and logs why.
 
 ## Farming information
 
-JEI **3.14.7.420** adds a **Climate requirements** category for recognised plant
+JEI **4.5.1.296** adds a **Climate requirements** category for recognised plant
 items once a world is available. It shows preferred temperatures, current
 local suitability and typical phase-midpoint temperatures at the player's
 position. Phase estimates exclude weather episodes and local heating; native
@@ -105,7 +105,7 @@ soil/light requirements still apply. Moving, changing season or heating an
 area changes the displayed live reading. The item catalogue is indexed once
 per joined world, rather than scanned every frame.
 
-Hwyla **1.8.17-B31** and The One Probe **1.4.19** show the same current crop
+Hwyla **1.8.22-B37** and The One Probe **1.4.19** show the same current crop
 requirements and growth status when looking at a plant. Rules and climate data
 come from the server; each player sees Celsius or Fahrenheit according to their
 existing preference. An unavailable temperature never becomes a false

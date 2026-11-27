@@ -11,11 +11,11 @@ public final class Integrations {
     public static Runnable worldClosed = () -> { };
     private Integrations() { }
     public static void init() {
-        load("crafttweaker", "MineTweaker3", "CraftTweakerBridge");
-        load("toughasnails", "ToughAsNails", "ToughAsNailsBridge");
-        load("waila", "Waila", "WailaProvider");
+        load("crafttweaker", "crafttweaker", "CraftTweakerBridge");
+        load("toughasnails", "toughasnails", "ToughAsNailsBridge");
+        load("waila", "waila", "WailaProvider");
         load("theoneprobe", "theoneprobe", "TopProvider");
-        STATUS.put("jei",!Loader.isModLoaded("JEI")?"absent":WeatherConfiguration.integration("jei")?"available on clients":"disabled");
+        STATUS.put("jei",!Loader.isModLoaded("jei")?"absent":WeatherConfiguration.integration("jei")?"available on clients":"disabled");
     }
     public static void load(String key, String mod, String entry) {
         if (!Loader.isModLoaded(mod)) { STATUS.put(key, "absent"); return; }

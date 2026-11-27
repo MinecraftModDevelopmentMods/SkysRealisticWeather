@@ -234,7 +234,7 @@ public final class ClientProbe extends WeatherProbe.SideProbe {
     private static void verifyCreativeEntry(boolean operator) {
         net.minecraft.block.Block block = WeatherController.BLOCK;
         Item item = Item.getItemFromBlock(block);
-        List<ItemStack> entries = new ArrayList<>();
+        net.minecraft.util.NonNullList<ItemStack> entries = net.minecraft.util.NonNullList.create();
         CreativeTabs tab = block.getCreativeTabToDisplayOn();
         item.getSubItems(item, tab, entries);
         WeatherProbe.require(entries.size() == (operator ? 1 : 0), "controller is listed only for creative operators");

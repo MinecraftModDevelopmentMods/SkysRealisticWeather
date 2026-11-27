@@ -27,7 +27,7 @@ public final class WeatherState {
 
     public static boolean supports(World world) {
         return world != null && world.provider.getDimension() == 0 && world.provider.isSurfaceWorld()
-                && !world.provider.hasNoSky() && world.getWorldType() != WorldType.DEBUG_WORLD;
+                && world.provider.hasSkyLight() && world.getWorldType() != WorldType.DEBUG_ALL_BLOCK_STATES;
     }
 
     public static Frame frame(World world) {
