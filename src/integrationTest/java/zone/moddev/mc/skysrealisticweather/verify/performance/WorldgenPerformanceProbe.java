@@ -3,6 +3,10 @@ package zone.moddev.mc.skysrealisticweather.verify.performance;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
+import javax.management.Attribute;
+import javax.management.JMException;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -49,6 +53,8 @@ public final class WorldgenPerformanceProbe {
     private static final boolean ALLOCATION = Boolean.getBoolean("perf.allocation");
     private static final boolean INTERLEAVE = Boolean.getBoolean("perf.interleave");
     private final ThreadMXBean threads = ManagementFactory.getThreadMXBean();
+    private MBeanServer allocationServer;
+    private ObjectName allocationBean;
     private final Map<Long, Long> frostStart = new HashMap<>();
     private List<Long> frostTimes;
     private int populationCount;
@@ -94,9 +100,7 @@ public final class WorldgenPerformanceProbe {
         require(threads.isCurrentThreadCpuTimeSupported(), "server thread CPU timer available");
         threads.setThreadCpuTimeEnabled(true);
         if (ALLOCATION) {
-            com.sun.management.ThreadMXBean hotspot = (com.sun.management.ThreadMXBean) threads;
-            require(hotspot.isThreadAllocatedMemorySupported(), "server thread allocation counter available");
-            hotspot.setThreadAllocatedMemoryEnabled(true);
+            enableAllocationCounter();
         }
     }
 
@@ -255,7 +259,25 @@ public final class WorldgenPerformanceProbe {
     }
 
     private long allocated() {
-        return ALLOCATION ? ((com.sun.management.ThreadMXBean) threads).getThreadAllocatedBytes(Thread.currentThread().getId()) : 0;
+        if (!ALLOCATION) return 0;
+        try {
+            return (Long) allocationServer.invoke(allocationBean, "getThreadAllocatedBytes",
+                    new Object[] {Thread.currentThread().getId()}, new String[] {"long"});
+        } catch (JMException failure) {
+            throw new IllegalStateException("Cannot read the server thread allocation counter", failure);
+        }
+    }
+
+    private void enableAllocationCounter() {
+        try {
+            allocationServer = ManagementFactory.getPlatformMBeanServer();
+            allocationBean = new ObjectName(ManagementFactory.THREAD_MXBEAN_NAME);
+            require(Boolean.TRUE.equals(allocationServer.getAttribute(allocationBean, "ThreadAllocatedMemorySupported")),
+                    "server thread allocation counter available");
+            allocationServer.setAttribute(allocationBean, new Attribute("ThreadAllocatedMemoryEnabled", true));
+        } catch (JMException failure) {
+            throw new IllegalStateException("Cannot enable the server thread allocation counter", failure);
+        }
     }
 
     private static void generate(ChunkProviderServer provider, int x, int z, int size, long[] timings) {

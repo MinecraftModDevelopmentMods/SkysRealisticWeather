@@ -5,29 +5,6 @@
     "description": "${description}",
     "version": "${version}",
     "mcversion": "${mcversion}",
-    "authorList": ["SkyBlade1978"],
-    "useDependencyInformation": true,
-    "requiredMods": ["forge@[13.20.1.2588,)"],
-    "dependencies": [
-      "forge@[13.20.1.2588,)",
-      "harvestcraft",
-      "mysticalagriculture",
-      "forestry",
-      "crafttweaker",
-      "toughasnails",
-      "jei",
-      "waila",
-      "theoneprobe",
-      "biomesoplenty",
-      "abyssalcraft",
-      "vampirism",
-      "geographicraft",
-      "biometweaker",
-      "openterraingenerator",
-      "biomebundle",
-      "lostcities",
-      "basemetals"
-    ],
-    "dependants": []
+    "authorList": ["SkyBlade1978"]
   }
 ]

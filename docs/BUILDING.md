@@ -225,17 +225,6 @@ See [JEI client results](JEI_CLIENT_1_11_2.md) for the tested layouts and fix.
 
 ## Acceptance scope
 
-Dependency metadata can be checked without a client:
-
-```text
-python scripts/Run-RuntimeChecks.py --mode metadata --expect "SKY_WEATHER_CHECK METADATA PASS" --output build/verification/metadata/<fresh>
-```
-
-Add `--mod <integration>` for each pinned jar to verify installed dependencies
-load before weather. The check compares Forge's bound metadata with the actual
-jar and confirms only Forge is mandatory. See [publishing](PUBLISHING.md) for
-the separate CurseForge relationships.
-
 Unit tests verify native renderer and Overworld generation bytecode as well as
 climate, network and API contracts. Packaged servers cover native hooks, crops,
 commands, temperature zones, crafting and save/reload. The distant-render probe

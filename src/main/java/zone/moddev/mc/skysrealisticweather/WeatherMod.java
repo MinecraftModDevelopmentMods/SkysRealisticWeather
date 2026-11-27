@@ -21,7 +21,7 @@ import zone.moddev.mc.skysrealisticweather.network.WeatherAdminMessage;
 
 @Mod(modid = BuildInfo.ID, name = BuildInfo.NAME, version = BuildInfo.VERSION,
         acceptedMinecraftVersions = "[1.11.2]", acceptableRemoteVersions = "[" + BuildInfo.VERSION + "]",
-        useMetadata = true, dependencies = "required-after:forge@[13.20.1.2588,)",
+        dependencies = "required-after:forge@[13.20.1.2588,);after:crafttweaker;after:toughasnails;after:waila;after:theoneprobe;after:jei",
         guiFactory = "zone.moddev.mc.skysrealisticweather.client.WeatherGuiFactory")
 public final class WeatherMod {
     public static final SimpleNetworkWrapper NETWORK = NetworkRegistry.INSTANCE.newSimpleChannel(BuildInfo.ID);

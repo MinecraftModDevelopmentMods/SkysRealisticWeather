@@ -26,9 +26,9 @@ Use a backup and a version-appropriate test pack for migration.
 - Tough As Nails uses `SeasonsOption` and its configurable temperature-scale
   midpoint; its body temperature, response timer and other modifiers remain native.
 - JEI uses the 4.x ingredient registry and category contract.
-- `mcmod.info` declares the 17 version-appropriate integrations as optional
-  dependencies; only Forge is required. Matching CurseForge relation data is
-  prepared separately; see [dependency metadata and publishing](PUBLISHING.md).
+- Forge keeps its existing annotation-based requirements and optional load
+  ordering. CurseForge relation data is prepared separately; see
+  [dependency metadata and publishing](PUBLISHING.md).
 
 ## Integration builds
 

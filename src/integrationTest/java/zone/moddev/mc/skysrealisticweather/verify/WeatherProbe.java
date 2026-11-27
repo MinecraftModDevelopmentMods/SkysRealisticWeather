@@ -84,7 +84,6 @@ public final class WeatherProbe {
         world = server.getWorld(0);
         require(HookStatus.available(), "required weather hooks loaded");
         switch (MODE) {
-            case "metadata": metadata(server); break;
             case "temperature-zones": TemperatureZoneProbe.run(world); break;
             case "thermal-network": new TemperatureNetworkProbe(world); break;
             case "jei-client": new zone.moddev.mc.skysrealisticweather.verify.jei.JeiServerProbe(world); break;
@@ -138,29 +137,6 @@ public final class WeatherProbe {
             case "live": break;
             default: throw new IllegalArgumentException(MODE);
         }
-    }
-
-    private void metadata(MinecraftServer server) {
-        net.minecraftforge.fml.common.Loader loader=net.minecraftforge.fml.common.Loader.instance();
-        net.minecraftforge.fml.common.ModContainer mod=loader.getIndexedModList().get("skysrealisticweather");
-        net.minecraftforge.fml.common.ModMetadata bound=mod.getMetadata();
-        try(java.util.zip.ZipFile jar=new java.util.zip.ZipFile(mod.getSource());
-                java.io.InputStream input=jar.getInputStream(jar.getEntry("mcmod.info"))) {
-            com.google.gson.JsonObject declared=new com.google.gson.JsonParser().parse(new java.io.InputStreamReader(input,java.nio.charset.StandardCharsets.UTF_8))
-                    .getAsJsonArray().get(0).getAsJsonObject();
-            java.util.Set<String> expected=new java.util.HashSet<>(),actual=new java.util.HashSet<>();
-            for(com.google.gson.JsonElement e:declared.getAsJsonArray("dependencies"))expected.add(e.getAsString().split("@",2)[0]);
-            for(net.minecraftforge.fml.common.versioning.ArtifactVersion v:bound.dependencies)actual.add(v.getLabel());
-            require(bound.useDependencyInformation&&expected.equals(actual),"Forge uses declared optional dependency metadata");
-            require(bound.requiredMods.size()==1&&bound.requiredMods.iterator().next().getLabel().equals("forge"),"only Forge is mandatory");
-            java.util.List<net.minecraftforge.fml.common.ModContainer> sorted=loader.getActiveModList();
-            for(net.minecraftforge.fml.common.versioning.ArtifactVersion v:bound.dependencies) {
-                net.minecraftforge.fml.common.ModContainer dependency=loader.getIndexedModList().get(v.getLabel());
-                if(dependency!=null)require(sorted.indexOf(dependency)<sorted.indexOf(mod),"installed integration loads before weather: "+v.getLabel());
-            }
-            System.out.println("SKY_WEATHER_CHECK METADATA PASS required="+bound.requiredMods+" dependencies="+actual);
-        } catch(java.io.IOException e){throw new IllegalStateException(e);}
-        server.initiateShutdown();
     }
 
     private void calendar() {
