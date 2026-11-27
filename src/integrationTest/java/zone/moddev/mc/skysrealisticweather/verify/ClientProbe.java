@@ -255,6 +255,16 @@ public final class ClientProbe extends WeatherProbe.SideProbe {
     }
 
     private void verifyConfig(Minecraft game) throws ReflectiveOperationException {
+        String thermometer = new ItemStack(zone.moddev.mc.skysrealisticweather.instrument.Thermometer.BLOCK).getDisplayName();
+        String controller = new ItemStack(WeatherController.BLOCK).getDisplayName();
+        System.out.println("LOCALIZATION_NAMES thermometer=" + thermometer + " controller=" + controller);
+        WeatherProbe.require(thermometer.equals("Thermometer") && controller.equals("Weather Controller"), "registered item names are translated");
+        String tab = net.minecraft.client.resources.I18n.format(((net.minecraft.block.Block) WeatherController.BLOCK).getCreativeTabToDisplayOn().getTranslatedTabLabel());
+        WeatherProbe.require(tab.equals("Sky's Weather Admin"), "admin tab is translated");
+        WeatherProbe.require(net.minecraft.client.resources.I18n.format("hud.skysrealisticweather.temperature").equals("Temperature"), "client HUD translation is loaded");
+        String folder = System.getProperty("skyweather.languageFolder");
+        if (folder != null) verifyFolderLanguage(new File(folder));
+        System.out.println("SKY_WEATHER_CHECK LOCALIZATION PASS");
         GuiScreen parent = new GuiModList(game.currentScreen);
         Class<? extends GuiScreen> factory = FMLClientHandler.instance()
                 .getGuiFactoryFor(Loader.instance().getIndexedModList().get("skysrealisticweather")).mainConfigGuiClass();
@@ -369,6 +379,29 @@ public final class ClientProbe extends WeatherProbe.SideProbe {
         pick(screen, "tropical_monsoon");
         System.out.println("SKY_WEATHER_CHECK PRESET_EDITOR PASS");
         pendingPicture = true;
+    }
+
+    private static void verifyFolderLanguage(final File folder) {
+        net.minecraftforge.fml.common.ModMetadata metadata = Loader.instance().getIndexedModList().get("skysrealisticweather").getMetadata();
+        net.minecraftforge.fml.common.DummyModContainer container = new net.minecraftforge.fml.common.DummyModContainer(metadata) {
+            @Override public File getSource() { return folder; }
+        };
+        net.minecraft.client.resources.IResourcePack pack = new net.minecraftforge.fml.client.FMLFolderResourcePack(container);
+        net.minecraft.client.resources.data.MetadataSerializer serializer = new net.minecraft.client.resources.data.MetadataSerializer();
+        serializer.registerMetadataSectionType(new net.minecraft.client.resources.data.PackMetadataSectionSerializer(), net.minecraft.client.resources.data.PackMetadataSection.class);
+        try {
+            net.minecraft.client.resources.data.PackMetadataSection section = pack.getPackMetadata(serializer, "pack");
+            WeatherProbe.require(section.getPackFormat() == 3, "development resources select the native 1.11 language path");
+        } catch (java.io.IOException failure) { throw new IllegalStateException("Cannot read development resource metadata", failure); }
+        net.minecraft.client.resources.SimpleReloadableResourceManager resources = new net.minecraft.client.resources.SimpleReloadableResourceManager(serializer);
+        resources.reloadResourcePack(pack);
+        net.minecraft.client.resources.Locale locale = new net.minecraft.client.resources.Locale();
+        locale.loadLocaleDataFiles(resources, java.util.Collections.singletonList("en_us"));
+        WeatherProbe.require(locale.formatMessage("tile.skysrealisticweather.thermometer.name", new Object[0]).equals("Thermometer")
+                && locale.formatMessage("tile.skysrealisticweather.weather_controller.name", new Object[0]).equals("Weather Controller")
+                && locale.formatMessage("itemGroup.skysweatheradmin", new Object[0]).equals("Sky's Weather Admin")
+                && locale.formatMessage("hud.skysrealisticweather.temperature", new Object[0]).equals("Temperature"), "native folder resource loader resolves development translations");
+        System.out.println("SKY_WEATHER_CHECK FOLDER_LOCALIZATION PASS " + folder);
     }
 
     private void modeUi(Minecraft game) throws ReflectiveOperationException {

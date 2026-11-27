@@ -29,6 +29,11 @@ The development client opens at 1280 × 720 by default. To use another size,
 set `overrideWidth` and `overrideHeight` in `options.txt` in the development
 game folder.
 
+Resources use pack format 3 and lowercase language filenames for Minecraft
+1.11.2. `gradlew prepareEclipseResources` refreshes `bin/main` after resource
+changes. Restart the client after changing `pack.mcmeta`; Forge selects its
+legacy or current resource wrapper when the client starts.
+
 `runClient` and `runServer` use Sky's Realistic Weather and Forge. For a
 compatibility session, choose one of the generated Eclipse launches below.
 Each uses its own folder under `run-compat/` for mods, configs and saves.

@@ -17,8 +17,9 @@ Use a backup and a version-appropriate test pack for migration.
 - Forge dependency and optional mod IDs match their 1.11.2 registrations.
 - Items use the 1.11 empty-stack and count contracts. Thermometer placement,
   hand use, creative-tab entries and block callbacks use the new signatures.
-- The config GUI supports the Forge 1.11 factory methods; language assets use
-  the lowercase resource name expected by this version.
+- The config GUI supports the Forge 1.11 factory methods; resource pack format 3
+  enables this version's lowercase language-file names. Item, admin-tab and HUD
+  translations are checked in a packaged client and the Eclipse resource folder.
 - The OTG v9 bridge uses its new package and loaded-terrain material access.
   It retains OTG's virtual biome, protected native cover and native materials.
 - Forestry 5.3's ambient climate-info fallback receives local temperature and
