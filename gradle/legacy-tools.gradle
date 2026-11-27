@@ -22,10 +22,23 @@ new RandomAccessFile(new File(tool.parentFile, 'specialsource-bootstrap.lock'), 
             if (gradle.startParameter.offline) {
                 throw new GradleException('The pinned legacy SpecialSource tool is missing or invalid. Run once online to restore it.')
             }
-            def connection = new URL(toolUrl).openConnection()
-            connection.connectTimeout = 15000
-            connection.readTimeout = 30000
-            byte[] downloaded = connection.inputStream.withCloseable { it.bytes }
+            byte[] downloaded
+            for (int attempt = 1; attempt <= 3; attempt++) {
+                def connection = new URL(toolUrl).openConnection()
+                connection.connectTimeout = 15000
+                connection.readTimeout = 30000
+                try {
+                    downloaded = connection.inputStream.withCloseable { it.bytes }
+                    break
+                } catch (IOException failure) {
+                    int status = connection.responseCode
+                    if (attempt == 3 || (status != 429 && status < 500)) throw failure
+                    logger.lifecycle('Legacy build tool download returned HTTP {}; retrying ({}/3).', status, attempt + 1)
+                    Thread.sleep(1000L * attempt)
+                } finally {
+                    connection.disconnect()
+                }
+            }
             if (digest(downloaded) != toolSha256) {
                 throw new GradleException('The legacy SpecialSource download did not match its pinned SHA-256.')
             }
