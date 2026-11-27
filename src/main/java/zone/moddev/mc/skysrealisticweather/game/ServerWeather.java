@@ -49,6 +49,9 @@ public final class ServerWeather {
     private boolean lastActive;
     private long forcedUntil;
     private WeatherEpisode forced;
+    private WorldWeatherData saved;
+    private net.minecraft.nbt.NBTTagCompound edits = new net.minecraft.nbt.NBTTagCompound();
+    private net.minecraft.nbt.NBTTagCompound savedEdits = new net.minecraft.nbt.NBTTagCompound();
 
     private ServerWeather() {
     }
@@ -58,9 +61,9 @@ public final class ServerWeather {
         if (!(event.getWorld() instanceof WorldServer) || !WeatherState.supports(event.getWorld())) return;
         close();
         world = (WorldServer) event.getWorld();
-        settings = launchSettings = WeatherConfiguration.startupSettings();
-        preset = launchPreset = WeatherConfiguration.startupPreset();
-        phaseLabels = launchLabels = WeatherConfiguration.startupLabels();
+        zone.moddev.mc.skysrealisticweather.compat.ScriptRules.activate();
+        saved = WorldWeatherData.get(world);
+        loadSettings();
         liveLocation = WeatherConfiguration.startupLocation();
         control = new LiveWeatherControl(world.getWorldInfo());
         configureWeather();
@@ -75,6 +78,7 @@ public final class ServerWeather {
     }
 
     public void close() {
+        zone.moddev.mc.skysrealisticweather.compat.Integrations.worldClosed.run();
         if (provider != null) provider.close();
         provider = null;
         world = null;
@@ -85,7 +89,44 @@ public final class ServerWeather {
         lastEpisode = null;
         forcedUntil = 0;
         edited = false;
+        saved = null;
+        edits = new net.minecraft.nbt.NBTTagCompound(); savedEdits = new net.minecraft.nbt.NBTTagCompound();
         WeatherState.server(null);
+    }
+
+    private void loadSettings() {
+        WeatherSettings defaults = zone.moddev.mc.skysrealisticweather.compat.ScriptRules.apply(WeatherConfiguration.startupSettings());
+        edits = saved.overrides();
+        try { settings = WorldWeatherData.merge(defaults, edits); }
+        catch (IllegalArgumentException invalid) { saved.invalid(invalid.getMessage()); edits = new net.minecraft.nbt.NBTTagCompound(); settings = defaults; }
+        preset = edits.hasKey("preset") ? edits.getString("preset") : WeatherConfiguration.startupPreset();
+        phaseLabels = settings.phaseLabels();
+        if (!saved.initialized && world.getTotalWorldTime() == 0 && !WeatherConfiguration.startingSeason().equals("WORLD_CLOCK")) {
+            long days = 0;
+            Season initial = Season.valueOf(WeatherConfiguration.startingSeason());
+            for(int i=0;i<initial.ordinal();i++) days += settings.profile.period(i).days;
+            edits.setLong("offset",days*24000-Math.floorDiv(world.getWorldTime(),24000)*24000);
+            settings = settings.withCalendarOffset(edits.getLong("offset")); saved.save(edits);
+        }
+        saved.initialized = true;
+        launchSettings = settings; launchPreset = preset; launchLabels = phaseLabels.clone(); savedEdits = edits.copy(); edited = false;
+    }
+    public void reloadStartupRules() {
+        if(world == null) return;
+        loadSettings(); configureWeather(); updateAndSync(true);
+    }
+    public void saveWorld() {
+        saved.save(edits); launchSettings=settings;launchPreset=preset;launchLabels=phaseLabels.clone();savedEdits=edits.copy();edited=false;
+    }
+    public void resetWorld() {
+        saved.reset(); automatic(); loadSettings(); configureWeather();updateAndSync(true);
+    }
+    public boolean hasWorldOverrides() { return saved != null && !saved.overrides().hasNoTags(); }
+    public WorldWeatherData worldData() { return saved; }
+    public long calendarTime() { return ClimateClock.shift(world.getWorldTime(),settings.calendarOffset); }
+    public void setCalendar(long tick) {
+        long offset=Math.multiplyExact(Math.subtractExact(Math.floorDiv(tick,24000),Math.floorDiv(world.getWorldTime(),24000)),24000);
+        apply(settings.withCalendarOffset(offset));
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
@@ -144,7 +185,7 @@ public final class ServerWeather {
             provider.close();
             provider = null;
         }
-        schedule = settings.scheduled ? new WeatherSchedule(world.getSeed(), settings.profile, settings.weather) : null;
+        schedule = settings.scheduled ? new WeatherSchedule(world.getSeed(), settings.profile, settings.weather, settings.calendarOffset) : null;
         GameRules rules = world.getGameRules();
         if (active && !rules.hasRule(WEATHER_CYCLE)) {
             rules.addGameRule(WEATHER_CYCLE, "true", GameRules.ValueType.BOOLEAN_VALUE);
@@ -211,15 +252,19 @@ public final class ServerWeather {
     }
 
     public void usePreset(Preset selected) {
+        WorldWeatherData.clearProfile(edits);
+        edits.setString("preset",selected.id); edits.setString("mode",ClimateMode.UNIVERSAL.name());
         preset = selected.id;
         phaseLabels = selected.phaseLabels();
-        apply(settings.withClimate(selected.profile, selected.weather).withMode(ClimateMode.UNIVERSAL, settings.biomes));
+        apply(settings.withClimate(selected.profile, selected.weather).withMode(ClimateMode.UNIVERSAL, settings.biomes).withPhaseLabels(phaseLabels),false);
     }
 
     public void useMode(ClimateMode mode) {
+        if(settings.mode==mode)return;
         clearPreview();
         control.replaceOverride();
-        apply(settings.withMode(mode, settings.biomes));
+        edits.setString("mode",mode.name()); WorldWeatherData.clearProfile(edits);
+        apply(WorldWeatherData.merge(zone.moddev.mc.skysrealisticweather.compat.ScriptRules.apply(WeatherConfiguration.startupSettings()),edits),false);
     }
 
     public void editClimate(ClimateProfile profile) {
@@ -234,7 +279,12 @@ public final class ServerWeather {
     public void editPlants(boolean enabled) { apply(settings.withFarming(settings.farming.withEnabled(enabled))); }
 
     private void apply(WeatherSettings replacement) {
+        apply(replacement,true);
+    }
+    private void apply(WeatherSettings replacement,boolean record) {
+        if(record) WorldWeatherData.record(edits,settings,replacement);
         settings = replacement;
+        phaseLabels = replacement.phaseLabels();
         edited = true;
         configureWeather();
         updateAndSync(true);
@@ -245,6 +295,7 @@ public final class ServerWeather {
         settings = launchSettings;
         preset = launchPreset;
         phaseLabels = launchLabels;
+        edits = savedEdits.copy();
         edited = false;
         configureWeather();
         updateAndSync(true);
@@ -265,6 +316,7 @@ public final class ServerWeather {
         frame = new WeatherState.Frame(world, settings, control.observation(), control.episode(), control.scheduled(),
                 frame != null && frame.settings == settings ? frame.regions : null, world.getSeed(), schedule);
         WeatherState.server(frame);
+        zone.moddev.mc.skysrealisticweather.compat.Integrations.weatherChanged.accept(world);
     }
 
     private void broadcast() {

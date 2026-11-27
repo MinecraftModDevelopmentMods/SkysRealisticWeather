@@ -79,7 +79,7 @@ public final class WeatherState {
                      BiomeWeather regions, long seed) {
             this(world, settings, live, episode, scheduled, regions, seed,
                     settings.mode == ClimateMode.PER_BIOME || settings.weather == null ? null
-                            : new WeatherSchedule(seed, settings.profile, settings.weather));
+                            : new WeatherSchedule(seed, settings.profile, settings.weather, settings.calendarOffset));
         }
 
         Frame(World world, WeatherSettings settings, Observation live, WeatherEpisode episode, boolean scheduled,
@@ -87,7 +87,7 @@ public final class WeatherState {
             this.world = world;
             this.settings = settings;
             this.time = world.getWorldTime();
-            this.climate = settings.profile.at(time);
+            this.climate = settings.profile.at(ClimateClock.shift(time, settings.calendarOffset));
             this.live = live;
             this.episode = episode;
             this.scheduled = scheduled;
@@ -153,6 +153,9 @@ public final class WeatherState {
         }
 
         private float adjustedTemperature(Biome biome, float original, float anomaly, BiomeClimate adjustment) {
+            return adjustedTemperature(biome,original,anomaly,adjustment,climate(biome).temperature);
+        }
+        private float adjustedTemperature(Biome biome, float original, float anomaly, BiomeClimate adjustment,float seasonal) {
             float strength = settings.profile.strength;
             if (regions != null) {
                 strength = Math.min(2, strength * regions.region(biome, time).preset.profile.strength);
@@ -161,8 +164,17 @@ public final class WeatherState {
                     original += (0.8F - biome.getTemperature()) * Math.min(1, strength * adjustment.seasonalScale);
                 }
             }
-            return original + adjustment.temperatureOffset + (climate(biome).temperature + anomaly * strength)
+            return original + adjustment.temperatureOffset + (seasonal + anomaly * strength)
                     * adjustment.seasonalScale;
+        }
+
+        /** Reference phase midpoint, excluding weather episodes, diurnal changes and local heating. */
+        public float phaseTemperature(Biome biome,float original,int phase) {
+            if(!active())return original;
+            ClimateProfile profile=regions==null?settings.profile:regions.profile(biome);
+            long days=0;for(int i=0;i<phase;i++)days+=profile.period(i).days;
+            long midpoint=days*24000+profile.period(phase).days*12000L;
+            return adjustedTemperature(biome,original,0,BiomeClimates.get(biome),profile.at(midpoint).temperature);
         }
 
         public float temperature(Biome biome, BlockPos position) {

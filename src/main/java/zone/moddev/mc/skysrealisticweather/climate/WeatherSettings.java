@@ -14,6 +14,8 @@ public final class WeatherSettings {
     public final ClimateMode mode;
     public final BiomeClimateMap biomes;
     public final FarmingSettings farming;
+    public final long calendarOffset;
+    private final String[] phaseLabels;
     private final GenerationSettings generation;
 
     public WeatherSettings(ClimateProfile profile, boolean passive, boolean surface, boolean foliage, boolean fog) {
@@ -33,12 +35,12 @@ public final class WeatherSettings {
     WeatherSettings(ClimateProfile profile, boolean passive, boolean surface, boolean foliage, boolean fog,
                     WeatherPattern weather, boolean scheduled, GenerationSettings generation) {
         this(profile, passive, surface, foliage, fog, weather, scheduled, generation, ClimateMode.UNIVERSAL,
-                BiomeClimateMap.defaults(), FarmingSettings.DEFAULT);
+                BiomeClimateMap.defaults(), FarmingSettings.DEFAULT, 0, java.util.Arrays.stream(zone.moddev.mc.skysrealisticweather.api.Season.values()).map(Preset::defaultPhaseLabel).toArray(String[]::new));
     }
 
     private WeatherSettings(ClimateProfile profile, boolean passive, boolean surface, boolean foliage, boolean fog,
                     WeatherPattern weather, boolean scheduled, GenerationSettings generation, ClimateMode mode,
-                    BiomeClimateMap biomes, FarmingSettings farming) {
+                    BiomeClimateMap biomes, FarmingSettings farming, long calendarOffset, String[] labels) {
         this.profile = profile;
         this.passive = passive;
         this.surface = surface;
@@ -50,6 +52,19 @@ public final class WeatherSettings {
         this.mode = mode;
         this.biomes = biomes;
         this.farming = farming;
+        this.calendarOffset = zone.moddev.mc.skysrealisticweather.game.ClimateClock.checked(calendarOffset);
+        if(labels.length!=4)throw new IllegalArgumentException("Four phase labels required");
+        for(String label:labels)if(label==null||label.isEmpty()||label.length()>80)throw new IllegalArgumentException("Invalid phase label");
+        this.phaseLabels=labels.clone();
+    }
+    public String[] phaseLabels() { return phaseLabels.clone(); }
+    public String phaseLabel(int phase) { return phaseLabels[phase]; }
+    public WeatherSettings withPhaseLabels(String[] labels) {
+        return new WeatherSettings(profile,passive,surface,foliage,fog,weather,scheduled,generation,mode,biomes,farming,calendarOffset,labels);
+    }
+
+    public WeatherSettings withCalendarOffset(long value) {
+        return new WeatherSettings(profile, passive, surface, foliage, fog, weather, scheduled, generation, mode, biomes, farming, value, phaseLabels);
     }
 
     public boolean seasonalWorldgen() {
@@ -66,22 +81,22 @@ public final class WeatherSettings {
 
     public WeatherSettings withNativeSnowBiomes(String[] ids) {
         return new WeatherSettings(profile, passive, surface, foliage, fog, weather, scheduled,
-                new GenerationSettings(generation.enabled, ids), mode, biomes, farming);
+                new GenerationSettings(generation.enabled, ids), mode, biomes, farming, calendarOffset, phaseLabels);
     }
 
     public WeatherSettings withClimate(ClimateProfile profile, WeatherPattern weather) {
-        return new WeatherSettings(profile, passive, surface, foliage, fog, weather, scheduled, generation, mode, biomes, farming);
+        return new WeatherSettings(profile, passive, surface, foliage, fog, weather, scheduled, generation, mode, biomes, farming, calendarOffset, phaseLabels);
     }
 
     public WeatherSettings withOptions(boolean passive, boolean surface, boolean foliage, boolean fog, boolean scheduled) {
-        return new WeatherSettings(profile, passive, surface, foliage, fog, weather, scheduled, generation, mode, biomes, farming);
+        return new WeatherSettings(profile, passive, surface, foliage, fog, weather, scheduled, generation, mode, biomes, farming, calendarOffset, phaseLabels);
     }
 
     public WeatherSettings withMode(ClimateMode mode, BiomeClimateMap biomes) {
-        return new WeatherSettings(profile, passive, surface, foliage, fog, weather, scheduled, generation, mode, biomes, farming);
+        return new WeatherSettings(profile, passive, surface, foliage, fog, weather, scheduled, generation, mode, biomes, farming, calendarOffset, phaseLabels);
     }
     public WeatherSettings withFarming(FarmingSettings farming) {
-        return new WeatherSettings(profile, passive, surface, foliage, fog, weather, scheduled, generation, mode, biomes, farming);
+        return new WeatherSettings(profile, passive, surface, foliage, fog, weather, scheduled, generation, mode, biomes, farming, calendarOffset, phaseLabels);
     }
 
 }

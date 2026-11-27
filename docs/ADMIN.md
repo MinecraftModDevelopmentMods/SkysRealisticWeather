@@ -11,12 +11,13 @@ running while it is open.
 | Weather | Return to Auto, clear the sky, start rain or thunder, or choose one of the 18 named events. Set a duration, peak intensity and optional dry-biome coverage. |
 | Calendar | Step to the previous or next phase, jump to a phase and day, add Minecraft days, or choose dawn, noon, dusk or midnight. |
 | Climate | Select a preset from the server's library. Adjust seasonal strength and each phase's length, temperature, wetness, thunder and fog. |
-| Effects | Toggle passive mode, seasonal snow and ice, foliage tint, fog, scheduled events, or climate-aware plant growth. Restore the startup settings when finished. |
+| Effects | Toggle passive mode, seasonal snow and ice, foliage tint, fog, scheduled events, or climate-aware plant growth. Reset saved world overrides. |
 
-Controls apply to the whole Overworld. Preset and settings changes live in
-memory until reset or server restart. To save lasting defaults, use the normal
-Mods configuration screen or the server's config file. Calendar jumps change
-the saved world clock. Presets with different phase lengths can map the same
+Controls apply to the whole Overworld. Edits are previews until **Save to world**;
+**Discard** restores the last saved settings. Only edited fields are stored,
+allowing other values to inherit future pack defaults. Set pack defaults through
+the normal Mods configuration screen or server config. Calendar jumps change
+a seasonal offset while preserving the daylight clock. Presets with different phase lengths can map the same
 world tick to a different phase. Weather may place snow or freeze water during a preview
 if seasonal surface effects are enabled.
 
@@ -46,7 +47,12 @@ can take over, and sleep can end a preview.
 | `/skyweather strength 1.5` | Change overall seasonal strength for the session. |
 | `/skyweather phase winter 45 -0.8 1.2 0.4 0.5` | Edit one phase in the order days, temperature, wetness, thunder and fog. |
 | `/skyweather option surface false` | Change an effect for the session. Options are `passive`, `surface`, `foliage`, `fog`, `scheduled` and `plants`. |
-| `/skyweather reset` | Restore startup settings and end any forced weather. The world clock stays at its current tick. |
+| `/skyweather reset` | Discard unsaved edits and end forced weather. |
+| `/skyweather world save` | Save explicitly edited fields to this world. |
+| `/skyweather world discard` | Restore the last saved world settings. |
+| `/skyweather world reset` | Remove world overrides and inherit pack defaults. |
+| `/skyweather validate` | Summarise pack rule and integration issues. |
+| `/skyweather dump` | Write resolved rules and status to a JSON report inside the world. |
 
 `/skyweather crop [x y z]` reports local plant suitability and the resolved
 profile. Without coordinates it uses the operator's crosshair.

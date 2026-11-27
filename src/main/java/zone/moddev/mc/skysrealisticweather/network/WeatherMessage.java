@@ -78,6 +78,8 @@ public final class WeatherMessage implements IMessage {
         }
         out.writeByte(settings.mode.ordinal());
         out.writeLong(seed);
+        out.writeLong(settings.calendarOffset);
+        for(String label:settings.phaseLabels())ByteBufUtils.writeUTF8String(out,label);
         String[] nativeBiomes = settings.nativeSnowBiomes();
         out.writeInt(nativeBiomes.length);
         for (String id : nativeBiomes) ByteBufUtils.writeUTF8String(out, id);
@@ -92,15 +94,8 @@ public final class WeatherMessage implements IMessage {
         for (String row : farmProfiles) ByteBufUtils.writeUTF8String(out, row);
         out.writeInt(farmMappings.length);
         for (String row : farmMappings) ByteBufUtils.writeUTF8String(out, row);
-        Map<String, PlantGrowthProfile> registered = farms.registeredProfiles();
-        out.writeInt(registered.size());
-        registered.forEach((key, profile) -> {
-            ByteBufUtils.writeUTF8String(out, key); out.writeBoolean(profile.exempt);
-            if (!profile.exempt) {
-                out.writeFloat(profile.minimum); out.writeFloat(profile.idealMinimum);
-                out.writeFloat(profile.idealMaximum); out.writeFloat(profile.maximum);
-            }
-        });
+        writePlantRules(out, farms.registeredProfiles());
+        writePlantRules(out, farms.scriptProfiles());
         if (settings.mode == ClimateMode.PER_BIOME) {
             out.writeInt(settings.biomes.presets.size());
             for (Preset preset : settings.biomes.presets.values()) {
@@ -154,6 +149,9 @@ public final class WeatherMessage implements IMessage {
         if (ordinal >= ClimateMode.values().length) throw new IllegalArgumentException("Invalid climate mode");
         ClimateMode mode = ClimateMode.values()[ordinal];
         seed = in.readLong();
+        long calendarOffset = in.readLong();
+        String[] phaseLabels=new String[4];
+        for(int i=0;i<4;i++)phaseLabels[i]=ByteBufUtils.readUTF8String(in);
         String[] nativeBiomes = new String[count(in, 8192)];
         for (int i = 0; i < nativeBiomes.length; i++) nativeBiomes[i] = ByteBufUtils.readUTF8String(in);
         String[] weather = new String[count(in, WeatherKind.values().length)];
@@ -164,14 +162,9 @@ public final class WeatherMessage implements IMessage {
         for (int i = 0; i < plantProfiles.length; i++) plantProfiles[i] = ByteBufUtils.readUTF8String(in);
         String[] plantMappings = new String[count(in, 8192)];
         for (int i = 0; i < plantMappings.length; i++) plantMappings[i] = ByteBufUtils.readUTF8String(in);
-        Map<String, PlantGrowthProfile> registered = new LinkedHashMap<>();
-        int plantCount = count(in, 8192);
-        for (int i = 0; i < plantCount; i++) {
-            String key = ByteBufUtils.readUTF8String(in);
-            registered.put(key, in.readBoolean() ? PlantGrowthProfile.EXEMPT
-                    : new PlantGrowthProfile(in.readFloat(), in.readFloat(), in.readFloat(), in.readFloat()));
-        }
-        settings = settings.withFarming(new FarmingSettings(plants, pam, agri, magic, forest, plantProfiles, plantMappings, registered));
+        Map<String, PlantGrowthProfile> registered = readPlantRules(in);
+        Map<String, PlantGrowthProfile> scripts = readPlantRules(in);
+        settings = settings.withFarming(new FarmingSettings(plants, pam, agri, magic, forest, plantProfiles, plantMappings, registered).withScriptProfiles(scripts));
         BiomeClimateMap biomes = BiomeClimateMap.defaults();
         if (mode == ClimateMode.PER_BIOME) {
             Map<String, Preset> presets = new LinkedHashMap<>();
@@ -192,7 +185,29 @@ public final class WeatherMessage implements IMessage {
             for (int i = 0; i < count; i++) mappings.put(ByteBufUtils.readUTF8String(in), ByteBufUtils.readUTF8String(in));
             biomes = new BiomeClimateMap(presets, mappings);
         }
-        settings = settings.withMode(mode, biomes).withNativeSnowBiomes(nativeBiomes);
+        settings = settings.withPhaseLabels(phaseLabels).withCalendarOffset(calendarOffset).withMode(mode, biomes).withNativeSnowBiomes(nativeBiomes);
+    }
+
+    private static void writePlantRules(ByteBuf out, Map<String, PlantGrowthProfile> rules) {
+        out.writeInt(rules.size());
+        rules.forEach((key, profile) -> {
+            ByteBufUtils.writeUTF8String(out, key); out.writeBoolean(profile.exempt);
+            if (!profile.exempt) {
+                out.writeFloat(profile.minimum); out.writeFloat(profile.idealMinimum);
+                out.writeFloat(profile.idealMaximum); out.writeFloat(profile.maximum);
+            }
+        });
+    }
+    private static Map<String, PlantGrowthProfile> readPlantRules(ByteBuf in) {
+        Map<String, PlantGrowthProfile> rules = new LinkedHashMap<>();
+        int length = count(in, 8192);
+        for (int i = 0; i < length; i++) {
+            String key = ByteBufUtils.readUTF8String(in);
+            if (rules.put(key, in.readBoolean() ? PlantGrowthProfile.EXEMPT
+                    : new PlantGrowthProfile(in.readFloat(), in.readFloat(), in.readFloat(), in.readFloat())) != null)
+                throw new IllegalArgumentException("Duplicate crop rule");
+        }
+        return rules;
     }
 
     private static int count(ByteBuf in, int limit) {

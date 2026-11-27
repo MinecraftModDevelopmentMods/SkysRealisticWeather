@@ -45,6 +45,9 @@ mcmodsrepo
 *.jfr
 *.hprof
 *.dmp
+__pycache__/
+*.py[cod]
+.pytest_cache/
 hs_err_pid*
 replay_pid*
 .env
@@ -73,6 +76,9 @@ agent_notes/
 .github/copilot-instructions.md
 .github/instructions/
 *agent-handover*.md
+
+# Keep unfinished artwork local; publish the finished project icon only.
+/branding/*-draft.png
 
 # Files from Forge MDK
 forge*changelog.txt

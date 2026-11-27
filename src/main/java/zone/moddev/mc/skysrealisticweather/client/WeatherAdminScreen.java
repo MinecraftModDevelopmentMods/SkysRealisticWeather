@@ -84,8 +84,10 @@ public final class WeatherAdminScreen extends GuiScreen {
             case EFFECTS: buildEffects(); break;
             case PRESETS: buildPresets(); break;
         }
+        button(16, 216, 78, "Save to world", () -> send("world save"));
+        button(98, 216, 76, "Discard", () -> send("world discard"));
         button(panelWidth - 56, 216, 56, "Done", () -> mc.displayGuiScreen(null));
-        button(panelWidth - 122, 216, 62, "Refresh", () -> send("status"));
+
     }
 
     private void buildWeather(int cell) {
@@ -179,6 +181,7 @@ public final class WeatherAdminScreen extends GuiScreen {
     }
 
     private void buildEffects() {
+        button(16, 192, 140, "Reset world overrides", () -> send("world reset"));
         WeatherSettings settings = snapshot.climate.settings;
         int column = (panelWidth - 16) / 2;
         toggle(16, 67, column, "Passive mode", "passive", settings.passive);
@@ -191,7 +194,7 @@ public final class WeatherAdminScreen extends GuiScreen {
                 ? "Real world" : "Universal", () -> send("mode " +
                 (settings.mode == zone.moddev.mc.skysrealisticweather.api.ClimateMode.PER_BIOME ? "universal" : "per_biome")));
         toggle(16, 145, column, "Plant growth", "plants", settings.farming.enabled);
-        button(16, 171, panelWidth - 16, "Restore startup settings", () -> send("reset"));
+        button(16, 171, panelWidth - 16, "Reset world overrides", () -> send("world reset"));
     }
 
     private void buildPresets() {
@@ -252,7 +255,7 @@ public final class WeatherAdminScreen extends GuiScreen {
             mc.displayGuiScreen(null);
             return;
         }
-        feedback = "Applying…";
+        feedback = "Applying...";
         error = false;
         mc.player.sendChatMessage("/" + WeatherCommand.NAME + " " + command);
     }
@@ -349,7 +352,7 @@ public final class WeatherAdminScreen extends GuiScreen {
             case WEATHER:
                 int right = 21 + (panelWidth - 24) * 56 / 100;
                 drawString(fontRendererObj, "Seconds", right, 93, 0xC1DEEB);
-                drawString(fontRendererObj, "Intensity (0.01–1)", right, 124, 0xC1DEEB);
+                drawString(fontRendererObj, "Intensity (0.01-1)", right, 124, 0xC1DEEB);
                 break;
             case CALENDAR:
                 drawString(fontRendererObj, "Jump to a phase on day", 16, 98, 0xC1DEEB);
@@ -360,7 +363,7 @@ public final class WeatherAdminScreen extends GuiScreen {
                 drawString(fontRendererObj, "Strength", 16, 98, 0xC1DEEB);
                 int column = (panelWidth - 16) / PHASE_FIELDS.length;
                 for (int index = 0; index < PHASE_FIELDS.length; index++) {
-                    drawString(fontRendererObj, fit(index == 1 ? "Δ" + zone.moddev.mc.skysrealisticweather.climate.WeatherConfiguration.temperatureUnit().symbol : PHASE_FIELDS[index], column - 3), 16 + index * column, 137, 0xC1DEEB);
+                    drawString(fontRendererObj, fit(index == 1 ? "Î”" + zone.moddev.mc.skysrealisticweather.climate.WeatherConfiguration.temperatureUnit().symbol : PHASE_FIELDS[index], column - 3), 16 + index * column, 137, 0xC1DEEB);
                 }
                 break;
             case EFFECTS:

@@ -260,21 +260,24 @@ public final class PlantGrowthProbe {
     }
 
     private void migration() throws Exception {
-        File original = WeatherConfiguration.file().getConfigFile(), legacy = new File(output, "v5.cfg");
-        String content = new String(Files.readAllBytes(original.toPath()), StandardCharsets.UTF_8).replace("~CONFIG_VERSION: 6", "~CONFIG_VERSION: 5");
+        File original = WeatherConfiguration.file().getConfigFile();
+        String baseline = new String(Files.readAllBytes(original.toPath()), StandardCharsets.UTF_8);
+        try { for(String version:new String[]{"5","6","7"}) {
+        File legacy = new File(output,"v"+version+".cfg");
+        String content = baseline.replaceFirst("~CONFIG_VERSION: [0-9]+", "~CONFIG_VERSION: "+version);
         Files.write(legacy.toPath(), content.getBytes(StandardCharsets.UTF_8));
-        net.minecraftforge.common.config.Configuration old = new net.minecraftforge.common.config.Configuration(legacy, "5");
+        net.minecraftforge.common.config.Configuration old = new net.minecraftforge.common.config.Configuration(legacy, version);
         old.getCategory("presets.burlington.winter").get("temperature").set("-1.6");
         String[] custom = {"COLD_SNAP,12,0,12,75"};
         old.getCategory("presets.burlington").get("weatherEvents").set(custom);
         old.getCategory(FarmingSettings.CATEGORY).get("mappings").set(new String[] {"example:crop=exempt"}); old.save();
-        try {
+            require(new String(Files.readAllBytes(legacy.toPath()),StandardCharsets.UTF_8).contains("~CONFIG_VERSION: "+version),"actual legacy version "+version+" fixture");
             WeatherConfiguration.load(legacy);
-            require(WeatherConfiguration.preset("burlington").profile.period(3).temperature == -1.6F, "v5 climate edit retained");
-            require(Arrays.equals(custom, WeatherConfiguration.preset("burlington").weather.rows()), "v5 event edit retained");
-            require(Arrays.equals(new String[] {"example:crop=exempt"}, WeatherConfiguration.startupSettings().farming.mappingRows()), "v5 optional plant overrides retained");
-            require(new String(Files.readAllBytes(legacy.toPath()), StandardCharsets.UTF_8).contains("~CONFIG_VERSION: 6"), "v5 upgrades to v6");
-        } finally { WeatherConfiguration.load(original); }
+            require(WeatherConfiguration.preset("burlington").profile.period(3).temperature == -1.6F, "legacy climate edit retained");
+            require(Arrays.equals(custom, WeatherConfiguration.preset("burlington").weather.rows()), "legacy event edit retained");
+            require(Arrays.equals(new String[] {"example:crop=exempt"}, WeatherConfiguration.startupSettings().farming.mappingRows()), "legacy optional plant overrides retained");
+            require(new String(Files.readAllBytes(legacy.toPath()), StandardCharsets.UTF_8).contains("~CONFIG_VERSION: 8"), "legacy upgrades to v8");
+        }} finally { WeatherConfiguration.load(original); }
     }
 
     private void mappingContracts() throws Exception {

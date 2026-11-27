@@ -9,10 +9,18 @@ Client display settings apply immediately. **Display / units** includes
 Fast graphics caps it at 96 blocks. Terrain view distance and loaded chunks
 also bound the visible range. See [distant weather](DISTANT_WEATHER.md).
 
-The server's `heating` category controls [temperature zones and furnace heating](TEMPERATURE_ZONES.md).
-Defaults are enabled, a two-block furnace radius and a 20 °C minimum. These
-settings require a restart; the furnace temperature editor follows your display
-unit preference, while the file stores Celsius.
+The server's `heating` category controls [temperature zones and vanilla heat sources](TEMPERATURE_ZONES.md).
+Defaults are enabled, a ten-block spherical furnace radius and a +20 °C bonus
+at the source, tapering to zero at the radius: +20, +18, +16 °C at successive
+blocks of radial distance. Config version 8 upgrades the old radius of 2 to 10,
+while retaining other radii and disabled heating.
+Fire defaults to +35 °C over eight blocks, lava (still or flowing) to +60 °C over
+twelve, and ordinary torches to +4 °C over four. These are gameplay air-warming
+bonuses rather than flame/material temperatures. All taper linearly with spherical
+distance; overlapping heaters use the strongest bonus. Each type has its own
+`Radius` and `BonusCelsius` keys; radius zero disables that type. These
+settings require a restart; the heat-source editors show temperature differences
+in your chosen units, while the file stores Celsius differences.
 
 | Mode | Settings |
 | --- | --- |

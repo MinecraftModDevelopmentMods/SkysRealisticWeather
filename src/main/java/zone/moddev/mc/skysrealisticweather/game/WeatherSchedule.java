@@ -10,6 +10,7 @@ final class WeatherSchedule {
     private static final int DAY = ClimateProfile.TICKS_PER_DAY;
     private static final int LOOKBACK = WeatherEpisode.MAX_DURATION / DAY + 1;
     private final long seed;
+    private final long offset;
     private final ClimateProfile profile;
     private final WeatherPattern pattern;
     private final WeatherEpisode[] candidates = new WeatherEpisode[LOOKBACK];
@@ -19,6 +20,11 @@ final class WeatherSchedule {
     private WeatherEpisode thermal;
 
     WeatherSchedule(long seed, ClimateProfile profile, WeatherPattern pattern) {
+        this(seed, profile, pattern, 0);
+    }
+
+    WeatherSchedule(long seed, ClimateProfile profile, WeatherPattern pattern, long offset) {
+        this.offset = offset;
         this.seed = seed;
         this.profile = profile;
         this.pattern = pattern;
@@ -75,7 +81,7 @@ final class WeatherSchedule {
         for (WeatherPattern.Rule rule : pattern.rules) {
             if (rule.kind.temperatureSpell() != temperature) continue;
             long start = date + between(random, rule.firstStart, rule.lastStart);
-            double weight = rule.weight(profile.at(start), profile);
+            double weight = rule.weight(profile.at(ClimateClock.shift(start, offset)), profile);
             if (weight <= 0) continue;
             total += weight;
             if (random.nextDouble() * total < weight) {

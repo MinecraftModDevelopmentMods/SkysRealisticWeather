@@ -12,7 +12,7 @@ import zone.moddev.mc.skysrealisticweather.game.TemperatureZones;
 
 /** Query on the world's logical thread. */
 public final class WeatherApi {
-    public static final int VERSION = 7;
+    public static final int VERSION = 8;
     public static final float SNOW_LINE = 0.15F;
 
     public enum PopulationPolicy { SEASONAL, NATIVE }
@@ -84,7 +84,7 @@ public final class WeatherApi {
         boolean active = frame.active();
         zone.moddev.mc.skysrealisticweather.climate.ClimateProfile.Reading climate = frame.climate(biome);
         return new ClimateSample(position, biome.getRegistryName(), frame.settings.mode, frame.climateId(biome),
-                frame.regions == null ? zone.moddev.mc.skysrealisticweather.climate.Preset.defaultPhaseLabel(climate.calendar.season)
+                frame.regions == null ? frame.settings.phaseLabel(climate.calendar.season.ordinal())
                         : frame.settings.biomes.preset(biome).phaseLabel(climate.calendar.season),
                 climate.calendar, getBiomeClimate(biome),
                 biome.getTemperature(), vanilla, frame.seasonalTemperature(biome, vanilla), biome.getRainfall(),

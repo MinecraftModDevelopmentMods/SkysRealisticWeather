@@ -210,9 +210,10 @@ public final class WeatherHooks {
                 : SurfaceTracker.INSTANCE.place(world, position, state);
     }
 
-    public static void blockChanged(IBlockState previous, Chunk chunk, BlockPos position) {
-        // Only replacing a deposit can invalidate its thaw record.
+    public static void blockChanged(IBlockState previous, Chunk chunk, BlockPos position, IBlockState current) {
+        // The same committed-change hook keeps local heat snapshots and thaw records current.
         if (previous == null) return;
+        if (BlockHeatSources.typeChanged(previous, current)) TemperatureZones.blockChanged(chunk, position);
         Block block = previous.getBlock();
         if (block != Blocks.ICE && block != Blocks.SNOW_LAYER) return;
         World world = chunk.getWorld();
