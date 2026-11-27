@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'eclipse'
+    id 'maven-publish'
     id 'net.minecraftforge.renamer' version '1.1.5'
     id 'net.minecraftforge.gradle' version '7.0.34'
 }
@@ -184,6 +185,8 @@ tasks.register('writeReleaseChecksum') {
     }
 }
 
+if (!providers.gradleProperty('weatherProductionOnly').getOrElse('false').toBoolean()) {
+
 sourceSets {
     integrationTest {
         compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
@@ -240,3 +243,9 @@ tasks.register('prepareRuntimeProbe') {
         receipt.get().asFile.setText(groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(result)), 'UTF-8')
     }
 }
+
+}
+
+ext.weatherReleaseJar = releaseJar
+ext.weatherApiJar = apiJar
+apply from: 'gradle/release.gradle'

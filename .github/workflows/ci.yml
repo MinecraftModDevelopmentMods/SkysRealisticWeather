@@ -1,0 +1,103 @@
+name: Sky's Realistic Weather CI
+
+on:
+  push:
+    branches:
+      - 'master-*'
+      - 'feature/**'
+      - 'release/**'
+      - 'updates/**'
+  pull_request:
+    branches:
+      - 'master-*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: skysrealisticweather-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build, test, and audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Read target build metadata
+        id: target
+        shell: bash
+        run: |
+          set -euo pipefail
+          value() { sed -n "s/^$1=//p" gradle.properties; }
+          toolchain="$(value java_toolchain_version)"
+          selector="$(value java_setup_version)"
+          echo "java_setup_version=${selector:-$toolchain}" >> "$GITHUB_OUTPUT"
+          echo "java_version=$(value java_version)" >> "$GITHUB_OUTPUT"
+          echo "minecraft_version=$(value minecraft_version)" >> "$GITHUB_OUTPUT"
+          echo "gradle_java_version=$(value gradle_java_version)" >> "$GITHUB_OUTPUT"
+          echo "artifact_prefix=SkysRealisticWeather-$(value mod_version)" >> "$GITHUB_OUTPUT"
+
+
+      - name: Install target Java toolchain
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: ${{ steps.target.outputs.java_setup_version }}
+
+      - name: Pin production Java
+        if: steps.target.outputs.java_version == '8'
+        run: |
+          echo "SKY_WEATHER_JAVA8_HOME=$JAVA_HOME" >> "$GITHUB_ENV"
+
+      - name: Install Java for Gradle
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: microsoft
+          java-version: ${{ steps.target.outputs.gradle_java_version }}
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
+
+
+      - name: Make the wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: Build, test, and audit release artifacts
+        run: ./gradlew clean check build verifyReleaseArtifacts writeReleaseChecksums -PweatherProductionOnly=true --max-workers=2 --no-daemon --stacktrace
+
+      - name: Replay artifact checks offline
+        run: ./gradlew verifyReleaseArtifacts writeReleaseChecksums -PweatherProductionOnly=true --offline --max-workers=2 --no-daemon --stacktrace
+
+      - name: Upload audited release candidate
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: SkysRealisticWeather-${{ steps.target.outputs.minecraft_version }}-${{ github.sha }}
+          if-no-files-found: error
+          retention-days: 30
+          path: |
+            build/libs/${{ steps.target.outputs.artifact_prefix }}.jar
+            build/libs/${{ steps.target.outputs.artifact_prefix }}-sources.jar
+            build/libs/${{ steps.target.outputs.artifact_prefix }}-javadoc.jar
+            build/release/SHA256SUMS
+            build/libs/${{ steps.target.outputs.artifact_prefix }}-api.jar
+            publishing/curseforge-relations.json
+            CHANGELOG.md
+
+      - name: Upload diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: SkysRealisticWeather-${{ steps.target.outputs.minecraft_version }}-diagnostics-${{ github.sha }}
+          if-no-files-found: ignore
+          retention-days: 14
+          path: |
+            build/test-results/**
+            build/reports/**
+            build/*-run/logs/**
+            build/*-run/**/*.properties
+            build/problems/**
