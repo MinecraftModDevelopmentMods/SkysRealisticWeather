@@ -24,10 +24,12 @@ Storm Coast and Two Winters. The standard year lasts 365 Minecraft days.
 Day/night temperature changes and independent cold spells make weather
 transitions more noticeable. The British Isles preset represents northern
 British lowlands, with snowier uplands. See the [climate balance and test
-assumptions](docs/TESTING_ASSUMPTIONS.md).
+assumptions](docs/TESTING_ASSUMPTIONS.md). The local 1.11.2 candidate also has
+[two-client multiplayer and whole-chunk performance results](docs/PERFORMANCE_1_11_2.md).
 
 Natural plant growth also follows local temperature. Cool-weather crops, warm
 crops and fruit use editable profiles; fertiliser keeps its native behaviour.
+Terrain providers can still generate their normal forests and parks in winter.
 Optional integrations cover HarvestCraft, Mystical Agriculture and
 Forestry. Hover seeds, saplings and crops to see preferred temperatures and
 whether the current local temperature suits them. Celsius is the default;

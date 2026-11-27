@@ -177,6 +177,7 @@ public final class PlantGrowthProbe {
         mappingContracts();
         environmentContracts();
         saplingFertilizer();
+        populationScope();
         if (Loader.isModLoaded("agricraft")) agricraft();
         if (Loader.isModLoaded("forestry")) forestry();
         require(PlantHookStatus.states().values().stream().allMatch(s -> s.equals("attached")), "all present adapters attached " + PlantHookStatus.states());
@@ -377,6 +378,35 @@ public final class PlantGrowthProbe {
             require(world.getBlockState(base).getBlock() == Blocks.LOG || world.getBlockState(base).getBlock() == Blocks.LOG2,
                     "sapling direct fertiliser grows a tree in cold climate " + tree.getRegistryName());
         }
+    }
+
+    private void populationScope() {
+        IBlockState sapling=Blocks.SAPLING.getDefaultState().withProperty(BlockSapling.TYPE,BlockPlanks.EnumType.ACACIA);
+        pad(pos,sapling);frame(-0.3F,startup.farming);
+        require(!net.minecraftforge.event.terraingen.TerrainGen.saplingGrowTree(world,new Random(1),pos),"natural cold tree remains gated");
+        net.minecraft.world.chunk.IChunkGenerator inner=populationGenerator(() -> {
+            require(net.minecraftforge.event.terraingen.TerrainGen.saplingGrowTree(world,new Random(1),pos),"nested population keeps native trees");
+            throw new IllegalStateException("population fixture");
+        });
+        net.minecraft.world.chunk.IChunkGenerator outer=populationGenerator(() -> {
+            require(PlantGrowthHooks.allow(world,pos,new Random(1)),"population bypasses farming gate");
+            try{PlantGrowthHooks.populateChunk(inner,0,0,world.getChunkFromBlockCoords(pos));}
+            catch(IllegalStateException expected){require(expected.getMessage().equals("population fixture"),"native generator exception preserved");}
+            require(net.minecraftforge.event.terraingen.TerrainGen.saplingGrowTree(world,new Random(1),pos),"outer population scope restored after nested failure");
+        });
+        PlantGrowthHooks.populateChunk(outer,0,0,world.getChunkFromBlockCoords(pos));
+        require(!net.minecraftforge.event.terraingen.TerrainGen.saplingGrowTree(world,new Random(1),pos),"natural gate restored after population");
+        try{PlantGrowthHooks.populateChunk(inner,0,0,world.getChunkFromBlockCoords(pos));}
+        catch(IllegalStateException expected){require(expected.getMessage().equals("population fixture"),"top-level population exception preserved");}
+        require(!PlantGrowthHooks.allow(world,pos,new Random(1)),"population scope cleared after failure");
+    }
+
+    private static net.minecraft.world.chunk.IChunkGenerator populationGenerator(Runnable callback) {
+        return (net.minecraft.world.chunk.IChunkGenerator)Proxy.newProxyInstance(net.minecraft.world.chunk.IChunkGenerator.class.getClassLoader(),
+                new Class[]{net.minecraft.world.chunk.IChunkGenerator.class},(proxy,method,args) -> {
+                    if(method.getName().equals("populate")||method.getName().equals("func_185931_b")){callback.run();return null;}
+                    throw new UnsupportedOperationException(method.getName());
+                });
     }
 
     private static Object invoke(Object target, String name, Object... args) throws Exception {

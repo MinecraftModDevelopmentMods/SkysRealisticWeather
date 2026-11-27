@@ -240,3 +240,27 @@ tasks.register('prepareRuntimeProbe') {
         receipt.get().asFile.setText(groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(result)), 'UTF-8')
     }
 }
+
+
+def performanceProbe = tasks.register('runtimePerformanceProbe', Jar) {
+    archiveFileName = 'weather-performance-probe-mapped.jar'
+    destinationDirectory = layout.buildDirectory.dir('verification/probe')
+    from(sourceSets.integrationTest.output) { include 'zone/moddev/mc/skysrealisticweather/verify/performance/**' }
+}
+def packagedPerformanceProbe = renamer.classes(performanceProbe) {
+    map.from minecraft.dependency.toSrgFile
+    output = layout.buildDirectory.file('verification/probe/weather-performance-probe.jar')
+}
+tasks.register('preparePerformanceProbe') { dependsOn packagedPerformanceProbe, tasks.named('prepareRuntimeProbe') }
+
+
+def controlProbe = tasks.register('runtimeControlProbe', Jar) {
+    archiveFileName = 'weather-control-probe-mapped.jar'
+    destinationDirectory = layout.buildDirectory.dir('verification/probe')
+    from(sourceSets.integrationTest.output) { include 'zone/moddev/mc/skysrealisticweather/verify/control/**' }
+}
+def packagedControlProbe = renamer.classes(controlProbe) {
+    map.from minecraft.dependency.toSrgFile
+    output = layout.buildDirectory.file('verification/probe/weather-control-probe.jar')
+}
+tasks.register('prepareControlProbe') { dependsOn packagedControlProbe, tasks.named('prepareRuntimeProbe') }

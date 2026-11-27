@@ -85,6 +85,7 @@ public final class WeatherProbe {
         require(HookStatus.available(), "required weather hooks loaded");
         switch (MODE) {
             case "temperature-zones": TemperatureZoneProbe.run(world); break;
+            case "thermal-network": new TemperatureNetworkProbe(world); break;
             case "precipitation": PrecipitationProbe.run(world); break;
             case "thermometer": ThermometerProbe.run(world); break;
             case "plants":

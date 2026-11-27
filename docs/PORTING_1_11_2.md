@@ -61,35 +61,51 @@ this port's qualification set.
 
 ## Verification and acceptance
 
-The local build passes **56 unit tests**, including native renderer and generation
-bytecode verification. The combined farming suite passes **571,769 contracts**
-and process reload; two-year farming simulations cover all 28 presets on two
-independent seeds. Core, individual and combined optional bridge profiles pass,
-as do disabled bridges, mercury crafting, heaters, temperature zones, invalid
+The corrected local build passes **57 unit tests**, including native renderer
+and generation bytecode verification. The combined farming suite passes
+**571,778 contracts** and process reload. The initial port's two-year farming
+simulations cover all 28 presets on two independent seeds. Core, individual and
+combined optional bridge profiles pass, as do disabled bridges, mercury
+crafting, heaters, temperature zones, invalid
 climate fallback, a plant/item stress matrix and native save/reload.
 
-Seven biome/generator profiles pass winter/summer generation checks. Separate
-fixtures verify Arctic and glacier native cover, Cold Taiga seasonal behaviour,
+Seven biome/generator profiles pass fresh winter/summer generation checks on the
+corrected candidate. Separate fixtures recheck Arctic and glacier native cover
+and Cold Taiga seasonal behaviour. Initial port fixtures also verify
 Forge ICE denial, clear weather, seasonal ownership and thaw after reload.
 Three Java API examples compile against the matching 1.11.2 API. Distant weather
 passes native sampling and six offscreen rendering configurations.
 
-The longer weather run uses 20-year sweeps on two independent seeds, five-year
-strength extremes and six native years per climate (one warm-up, five scored).
+The initial port's longer weather run uses 20-year sweeps on two independent
+seeds, five-year strength extremes and six native years per climate (one warm-up,
+five scored).
 It completes without crashes and passes **335 of 336 balance checks**. British
 Isles (`oxford`) averages **35.025 snow dates/year** against a design band of
 18–35: one extra snow date across 40 simulated years. This small upper-band
 finding is retained, and no climate values or acceptance thresholds were changed
 for the port. The shorter pilot's three low-band findings are also preserved;
 they do not recur in the longer sample. Statistical qualification is therefore
-not reported as an unqualified pass.
+not reported as an unqualified pass. The climate engine and tuning are unchanged
+by the subsequent population-scope correction; this long sample was not rerun.
+
+Two real packaged clients now pass season/storm/sleep, server biome mapping,
+admin permissions and UI, personal display units, thermometers, crop tooltips,
+temperature-zone synchronization, heaters, chunk watching and reconnect checks.
+Three paired whole-chunk repeats compare with and without weather for vanilla,
+Biomes O' Plenty, OTG/Biome Bundle and Lost Cities; a further six JVMs exercise
+dense winter snow and ice. See [multiplayer and performance results](PERFORMANCE_1_11_2.md)
+for timings, the Lost Cities park-tree fix, BOP's native decoration variability
+and the isolated downstream effects of winter cover.
 
 Local checks and their candidate hashes are retained under
-`build/verification/port-1.11.2`. See `RESULT.md` there for final receipts,
-including preserved unsuccessful port attempts. [Build instructions](BUILDING.md)
+`build/verification/port-1.11.2` for initial qualification and
+`build/verification/multiplayer-performance-1112` for the corrected candidate.
+See `RESULT.md` and artifact-bound receipts in each, including preserved
+unsuccessful attempts. [Build instructions](BUILDING.md)
 explain how to repeat the checks with fresh disposable worlds.
 
-The port is local and unpublished. Manual client gameplay, visual acceptance,
-live two-client multiplayer and a new whole-chunk performance baseline remain
-separate acceptance work. Published 1.10.2 timings and the 1.10.2 Sylvester pack
+The port is local and unpublished. Manual client gameplay and visual acceptance,
+including JEI's client category, remain separate acceptance work. Automated
+two-client multiplayer and the new whole-chunk baseline are complete for the
+documented scenarios. Published 1.10.2 timings and the 1.10.2 Sylvester pack
 are not used to claim 1.11.2 coverage. No player world is launched by these tests.

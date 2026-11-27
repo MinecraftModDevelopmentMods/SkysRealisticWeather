@@ -119,12 +119,88 @@ They isolate seasonal behaviour rather than simulating full-server physics.
 Farming endurance uses seeded natural crop callbacks with valid light and soil.
 Neither establishes real meteorological accuracy or full-server performance.
 
+## Multiplayer and generation performance
+
+```text
+gradlew prepareRuntimeProbe prepareControlProbe preparePerformanceProbe
+python scripts/Run-MultiplayerChecks.py --case calendar --output build/verification/multiplayer-performance-1112/<fresh-calendar>
+python scripts/Run-MultiplayerChecks.py --case biome --output build/verification/multiplayer-performance-1112/<fresh-biome>
+python scripts/Run-MultiplayerChecks.py --case admin --output build/verification/multiplayer-performance-1112/<fresh-admin>
+python scripts/Run-MultiplayerChecks.py --case thermal --output build/verification/multiplayer-performance-1112/<fresh-thermal>
+python scripts/Run-MultiplayerChecks.py --case control --output build/verification/multiplayer-performance-1112/<fresh-without-weather>
+python scripts/Run-MultiplayerChecks.py --case control --control-weather --output build/verification/multiplayer-performance-1112/<fresh-with-weather>
+python scripts/Run-GenerationPerformance.py --rounds 3 --bop-calibration build/verification/<bop-calibration>.json --output build/verification/multiplayer-performance-1112/<fresh-generation>
+```
+
+The Windows multiplayer runner opens two real packaged clients on a separate
+desktop and never switches input to it. Clients are muted, capped at 10 FPS and
+share one logical CPU; the dedicated server uses another. All processes run at
+BelowNormal priority and use fresh disposable worlds. The client runtime must
+contain the pinned Forge installation, Minecraft assets and Windows natives.
+`WEATHER_CLIENT_RUNTIME` and `WEATHER_SERVER_RUNTIME` can override the installed
+runtime locations in `scripts/verification_clients.py`.
+
+Create the BOP calibration receipt with the controls below before running the
+four-provider generation comparison.
+
+The calendar fixture has a deterministic test-only winter storm; normal presets
+are unchanged. Biome and thermal cases keep Per Biome Climate. The thermal case
+uses ordinary network traffic to test personal display units, instruments, crop
+suitability, heat changes, watched chunks and reconnects. The two control variants
+use the same test jar, weather, world and two-player workload. After 120 warm-up
+ticks with both players present, they record 600 complete server-tick intervals.
+Repeat in opposite order to compare CPU time and tick duration.
+
+Generation uses vanilla terrain, Biomes O' Plenty, Biome Bundle/OTG and Lost
+Cities/CompatLayer, one server at a time on one logical CPU. Every process warms
+576 chunk requests before timing separate 784-request winter and summer regions.
+Three matched repeats counterbalance mod presence and seasonal order. Both
+variants use the same seed and rain; the weather variant uses fresh Per Biome
+Climate defaults. The world's auxiliary RNG is seeded before each region.
+Population coverage and named-state fingerprints are checked outside timing,
+normalizing seasonal snow layers and source-water ice. Lightweight biome and
+height-map snapshots are captured before population, identically in both variants.
+Measurements exclude chunk saving and are not client FPS or a full modpack benchmark. Preserve
+every failed receipt and use fresh output directories for repeats.
+
+Biomes O' Plenty's weighted decorators can vary between fresh JVMs even without
+weather. Establish that limitation with two identical controls before allowing
+decoration variation in its comparisons; base biome and height-map equality
+remains mandatory. Every other provider still requires full normalized block
+equality. Keep the calibration receipt and original controls with the results.
+
+```text
+python scripts/Run-GenerationPerformance.py --terrain bop --variant vanilla --rounds 1 --output build/verification/<bop-baseline-a>
+python scripts/Run-GenerationPerformance.py --terrain bop --variant vanilla --rounds 1 --output build/verification/<bop-baseline-b>
+python scripts/Calibrate-GenerationBaseline.py build/verification/<bop-baseline-a>/bop-1-vanilla/result.json build/verification/<bop-baseline-b>/bop-1-vanilla/result.json --output build/verification/<bop-calibration>.json
+python scripts/Run-GenerationPerformance.py --bop-calibration build/verification/<bop-calibration>.json --output build/verification/<fresh-comparison>
+python scripts/Run-GenerationPerformance.py --terrain vanilla --climate-mode UNIVERSAL --fixed-biome 1 --output build/verification/<fresh-snow-stress>
+```
+
+The last case uses fixed Plains terrain and Burlington's winter to ensure dense
+snow/ice placement is measured in addition to the default climate regions.
+Physical cover can affect later neighbouring decoration, so this stress case
+may fail full post-population equality even though base terrain matches. To
+isolate the cause, repeat one pair with `--veto-deposits --rounds 1`. It must
+restore complete normalized block equality while actually vetoing deposits.
+Then record the diagnostic and pass it only to the same cold-stress workload:
+
+```text
+python scripts/Calibrate-GenerationBaseline.py --cover-veto build/verification/<veto-campaign> --output build/verification/<cover-diagnostic>.json
+python scripts/Run-GenerationPerformance.py --terrain vanilla --climate-mode UNIVERSAL --fixed-biome 1 --cover-diagnostic build/verification/<cover-diagnostic>.json --output build/verification/<verified-snow-stress>
+python scripts/Analyze-GenerationPerformance.py build/verification/<completed-campaign> --output build/verification/<summary>.json
+```
+
+The resulting cold comparison still requires matching base biomes and height
+maps and exact summer blocks. Its winter timings include the real population
+effects of snow and ice; they are not an equal-decoration microbenchmark.
+
 ## Acceptance scope
 
 Unit tests verify native renderer and Overworld generation bytecode as well as
 climate, network and API contracts. Packaged servers cover native hooks, crops,
 commands, temperature zones, crafting and save/reload. The distant-render probe
 can draw through an offscreen LWJGL Pbuffer without a game window. These checks
-do not replace manual client visuals, live multiplayer testing or testing a
+do not replace manual client gameplay, visual acceptance or testing a
 particular modpack. Old 1.10.2 timing and gameplay receipts do not qualify this
 version. See [current port evidence and limitations](PORTING_1_11_2.md).

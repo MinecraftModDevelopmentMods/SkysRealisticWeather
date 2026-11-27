@@ -276,6 +276,18 @@ public final class WeatherTransformer implements IClassTransformer, Opcodes {
     }
 
     private static void patchChunk(ClassNode type) {
+        int populations=0;
+        for(MethodNode method:type.methods)for(AbstractInsnNode instruction:method.instructions.toArray()) {
+            if(!(instruction instanceof MethodInsnNode)||instruction.getOpcode()!=INVOKEINTERFACE)continue;
+            MethodInsnNode call=(MethodInsnNode)instruction;
+            if(!FMLDeobfuscatingRemapper.INSTANCE.map(call.owner).equals("net/minecraft/world/chunk/IChunkGenerator")
+                    ||!matches(call.owner,call.name,call.desc,"populate","func_185931_b","(II)V"))continue;
+            method.instructions.insertBefore(call,new VarInsnNode(ALOAD,0));
+            method.instructions.set(call,hook("zone/moddev/mc/skysrealisticweather/game/PlantGrowthHooks","populateChunk",
+                    "(Lnet/minecraft/world/chunk/IChunkGenerator;II"+CHUNK+")V"));
+            populations++;
+        }
+        expect(populations,1,"population farming scope");
         MethodNode set = method(type, "setBlockState", "func_177436_a", "(" + POS + STATE + ")" + STATE);
         int exits = 0;
         for (AbstractInsnNode instruction : set.instructions.toArray()) {

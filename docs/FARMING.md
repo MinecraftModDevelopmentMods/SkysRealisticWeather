@@ -9,6 +9,10 @@ still apply. Bonemeal and direct fertiliser keep their native behaviour and
 eligibility. Machines that invoke the ordinary natural-growth path follow the
 climate rules.
 
+Terrain generation keeps native plant and tree generation, including generators
+that grow saplings to create parks or forests. These generated trees can appear
+in winter; later natural growth follows the local climate as usual.
+
 Registered [temperature zones](TEMPERATURE_ZONES.md) and burning vanilla furnace
 zones can override that temperature. The same effective temperature reaches
 crop tooltips, thermometers and the compact HUD. F3 and `/skyweather climate`

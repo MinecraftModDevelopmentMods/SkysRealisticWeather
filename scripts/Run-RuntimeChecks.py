@@ -49,7 +49,9 @@ if not directory.exists():
     (directory/'server.properties').write_text(props)
     if args.universal:
         (directory/'config').mkdir()
-        (directory/'config/skysrealisticweather.cfg').write_text('~CONFIG_VERSION: 8\ngeneral {\n S:climateMode=UNIVERSAL\n S:activePreset=burlington\n}\n')
+        # A partial current-schema file would mean an intentionally empty preset library.
+        # Leave it unversioned so the loader seeds the complete default catalog.
+        (directory/'config/skysrealisticweather.cfg').write_text('general {\n S:climateMode=UNIVERSAL\n S:activePreset=burlington\n}\n')
 else:
     previous = json.loads((output/'initial.json').read_text())
     assert previous['passed'] and previous['main_sha256'] == digest(main) and previous['probe_sha256'] == digest(probe), 'Reload requires the same passing candidate'

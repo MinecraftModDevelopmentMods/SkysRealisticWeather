@@ -54,6 +54,7 @@ public final class ClientProbe extends WeatherProbe.SideProbe {
     private String climatePicture;
     private int modeUiStage;
     private GuiScreen modeRoot;
+    private TemperatureClientProbe thermal;
 
     @Override
     public void register() {
@@ -64,6 +65,10 @@ public final class ClientProbe extends WeatherProbe.SideProbe {
     public void tick(TickEvent.ClientTickEvent event) throws ReflectiveOperationException {
         if (event.phase != TickEvent.Phase.END) return;
         Minecraft game = Minecraft.getMinecraft();
+        if (Boolean.getBoolean("skyweather.heatNetwork")) {
+            if(thermal==null)thermal=new TemperatureClientProbe();
+            thermal.tick(game);return;
+        }
         if (Boolean.getBoolean("skyweather.biomeNetwork")) {
             biomeNetwork(game);
             return;

@@ -21,7 +21,7 @@ folder; 1.10.2 counts and performance figures are not reused.
 
 | Profile | Snow columns in fresh winter terrain | Snow columns in fresh summer terrain |
 | --- | ---: | ---: |
-| Biomes O' Plenty | 218 | 0 |
+| Biomes O' Plenty | 229 | 0 |
 | AbyssalCraft | 212 | 0 |
 | Vampirism | 256 | 0 |
 | GeographiCraft | 236 | 0 |
@@ -31,6 +31,16 @@ folder; 1.10.2 counts and performance figures are not reused.
 
 Counts refer to the target biome within a 16 × 16 population area, not the
 whole world. Client visuals and whole-chunk performance are separate checks.
+BOP's native decoration can vary across fresh JVMs, so its exact cover count
+can also vary. The table records the corrected candidate's fresh recheck.
+The repeated with/without-weather timings, terrain fingerprints and explicit
+comparison limits are in [multiplayer and performance results](PERFORMANCE_1_11_2.md).
+
+Terrain providers retain native tree generation during their population
+callback, including Lost Cities' forced sapling growth for parks. Subsequent
+natural growth uses local temperature as usual. Seasonal cover may influence
+later neighbouring decoration; it does not change the generator's base biome
+selection or pre-population height map in the tested comparisons.
 
 ## Native exceptions and ownership
 
