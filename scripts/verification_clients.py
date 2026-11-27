@@ -39,6 +39,7 @@ class Client:
   k.CloseHandle(self.info.hProcess);self.log.close();self.null.close()
 def client_command(directory,name,options):
  cache=Path(os.environ.get('WEATHER_CLIENT_RUNTIME','D:/MinecraftMineralogy/packaged-runtime-cache/forge-1.11.2-13.20.1.2588-client'));engine=Path(os.environ.get('WEATHER_SERVER_RUNTIME','D:/MinecraftMineralogy/packaged-runtime-cache/forge-1.11.2-13.20.1.2588'))
+ assets=Path(os.environ.get('WEATHER_CLIENT_ASSETS',str(cache/'assets')))
  with zipfile.ZipFile(engine/'forge-1.11.2-13.20.1.2588-installer.jar') as z:forge=json.loads(z.read('install_profile.json'))['versionInfo']
  mc=json.loads((cache/'versions/1.11.2/1.11.2.json').read_text());cp=[cache/'versions/1.11.2/1.11.2.jar',engine/'forge-1.11.2-13.20.1.2588-universal.jar'];seen=set()
  def library(path):
@@ -57,4 +58,4 @@ def client_command(directory,name,options):
   if key in seen:continue
   seen.add(key);cp.append(library(f'{group.replace(".","/")}/{artifact}/{version}/{artifact}-{version}.jar'))
  java=Path.home()/'.gradle/jdks/temurin-8-amd64-windows.2/bin/java.exe'
- return [str(java),'-Xms128m','-Xmx768m','-XX:+UseSerialGC','-XX:ActiveProcessorCount=1','-XX:CICompilerCount=2','-Dfml.ignoreInvalidMinecraftCertificates=true','-Djava.library.path='+str(cache/'natives'),*['-D'+v for v in options],'-cp',os.pathsep.join(map(str,cp)),'net.minecraft.launchwrapper.Launch','--tweakClass','net.minecraftforge.fml.common.launcher.FMLTweaker','--username',name,'--uuid',uuid.uuid3(uuid.NAMESPACE_DNS,name).hex,'--accessToken','0','--userType','legacy','--version','1.11.2','--gameDir',str(directory),'--assetsDir',str(cache/'assets'),'--assetIndex',mc['assetIndex']['id'],'--width','800','--height','480']
+ return [str(java),'-Xms128m','-Xmx768m','-XX:+UseSerialGC','-XX:ActiveProcessorCount=1','-XX:CICompilerCount=2','-Dfml.ignoreInvalidMinecraftCertificates=true','-Djava.library.path='+str(cache/'natives'),*['-D'+v for v in options],'-cp',os.pathsep.join(map(str,cp)),'net.minecraft.launchwrapper.Launch','--tweakClass','net.minecraftforge.fml.common.launcher.FMLTweaker','--username',name,'--uuid',uuid.uuid3(uuid.NAMESPACE_DNS,name).hex,'--accessToken','0','--userType','legacy','--version','1.11.2','--gameDir',str(directory),'--assetsDir',str(assets),'--assetIndex',mc['assetIndex']['id'],'--width','800','--height','480']

@@ -40,7 +40,7 @@ establish client visual acceptance.
 | [Forestry](https://www.curseforge.com/minecraft/mc-mods/forestry/files/2542509) | 1.11.2 | 5.3.4.257 | Ambient climate info, humidity and controlled-room precedence |
 | [CraftTweaker](https://www.curseforge.com/minecraft/mc-mods/crafttweaker/files/2838724) | 1.11.2 | 3.1.0-legacy, file 2838724 | Startup/reload rules, scripts, synchronized snapshots |
 | [Tough As Nails](https://modrinth.com/mod/tough-as-nails/version/rVR7XpTd) | 1.11.2 | 2.1.0.65 | Ambient correction, heated zones and restored seasonal ownership |
-| [JEI](https://www.curseforge.com/minecraft/mc-mods/jei/files/2461378) | 1.11.2 | 4.5.1.296 | API compilation and dedicated-server optional-side loading; client UI acceptance pending |
+| [JEI](https://www.curseforge.com/minecraft/mc-mods/jei/files/2461378) | 1.11.2 | 4.5.1.296 | Native client category, live units/suitability, optional plants, disabled bridge and reconnect checks; dedicated-server loading |
 | [Hwyla](https://www.curseforge.com/minecraft/mc-mods/hwyla/files/2496989) | 1.11.2 | 1.8.22-B37 | Registered provider, server data and ordinary-crop climate presentation |
 | [The One Probe](https://www.curseforge.com/minecraft/mc-mods/the-one-probe/files/2496984) | 1.11.2 | 1.4.19 with CompatLayer 0.3.1 | Provider registration and crop climate presentation |
 | [Biomes O' Plenty](https://www.curseforge.com/minecraft/mc-mods/biomes-o-plenty/files/2536549) | 1.11.2 | 6.2.0.2319 | Climate mapping and native seasonal population |
@@ -97,6 +97,12 @@ dense winter snow and ice. See [multiplayer and performance results](PERFORMANCE
 for timings, the Lost Cities park-tree fix, BOP's native decoration variability
 and the isolated downstream effects of winter cover.
 
+[JEI client checks and screenshot review](JEI_CLIENT_1_11_2.md) are also complete
+for the pinned build. They corrected a compact recipe-panel overflow and moved
+full details to a dedicated hover marker. Only JEI integration class files
+changed after multiplayer/performance qualification; the client report records
+the updated jar hash separately from the earlier server qualification.
+
 Local checks and their candidate hashes are retained under
 `build/verification/port-1.11.2` for initial qualification and
 `build/verification/multiplayer-performance-1112` for the corrected candidate.
@@ -104,8 +110,8 @@ See `RESULT.md` and artifact-bound receipts in each, including preserved
 unsuccessful attempts. [Build instructions](BUILDING.md)
 explain how to repeat the checks with fresh disposable worlds.
 
-The port is local and unpublished. Manual client gameplay and visual acceptance,
-including JEI's client category, remain separate acceptance work. Automated
+The port is local and unpublished. General manual client gameplay and visual
+acceptance remain separate work. Targeted JEI client checks, automated
 two-client multiplayer and the new whole-chunk baseline are complete for the
 documented scenarios. Published 1.10.2 timings and the 1.10.2 Sylvester pack
 are not used to claim 1.11.2 coverage. No player world is launched by these tests.

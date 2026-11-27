@@ -86,6 +86,7 @@ public final class WeatherProbe {
         switch (MODE) {
             case "temperature-zones": TemperatureZoneProbe.run(world); break;
             case "thermal-network": new TemperatureNetworkProbe(world); break;
+            case "jei-client": new zone.moddev.mc.skysrealisticweather.verify.jei.JeiServerProbe(world); break;
             case "precipitation": PrecipitationProbe.run(world); break;
             case "thermometer": ThermometerProbe.run(world); break;
             case "plants":

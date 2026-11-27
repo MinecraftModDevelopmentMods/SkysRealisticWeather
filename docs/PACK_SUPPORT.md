@@ -104,6 +104,9 @@ position. Phase estimates exclude weather episodes and local heating; native
 soil/light requirements still apply. Moving, changing season or heating an
 area changes the displayed live reading. The item catalogue is indexed once
 per joined world, rather than scanned every frame.
+The compact recipe panel includes a **?** marker: hover over it for full
+details, including the local temperature source. The summary stays readable
+while the pointer is over its ordinary text.
 
 Hwyla **1.8.22-B37** and The One Probe **1.4.19** show the same current crop
 requirements and growth status when looking at a plant. Rules and climate data

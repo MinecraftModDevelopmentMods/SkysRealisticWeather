@@ -139,6 +139,7 @@ BelowNormal priority and use fresh disposable worlds. The client runtime must
 contain the pinned Forge installation, Minecraft assets and Windows natives.
 `WEATHER_CLIENT_RUNTIME` and `WEATHER_SERVER_RUNTIME` can override the installed
 runtime locations in `scripts/verification_clients.py`.
+`WEATHER_CLIENT_ASSETS` can select a separate complete Minecraft assets folder.
 
 Create the BOP calibration receipt with the controls below before running the
 four-provider generation comparison.
@@ -194,6 +195,33 @@ python scripts/Analyze-GenerationPerformance.py build/verification/<completed-ca
 The resulting cold comparison still requires matching base biomes and height
 maps and exact summer blocks. Its winter timings include the real population
 effects of snow and ice; they are not an equal-decoration microbenchmark.
+
+## JEI client checks
+
+```text
+gradlew check build writeReleaseChecksum prepareRuntimeProbe
+python scripts/Run-JeiClientChecks.py --profile vanilla --output build/verification/jei-client-1112/<fresh-vanilla>
+python scripts/Run-JeiClientChecks.py --profile combined --output build/verification/jei-client-1112/<fresh-combined>
+python scripts/Run-JeiClientChecks.py --profile disabled --output build/verification/jei-client-1112/<fresh-disabled>
+```
+
+Each profile uses one packaged JEI 4.5.1.296 client and a fresh dedicated server.
+The client is muted, capped at 10 FPS, BelowNormal and on a non-input Windows
+desktop. Its ordinary guest player opens native JEI recipe screens, checks
+server crop overrides and changing local temperatures, then disconnects/rejoins.
+Screenshots cover 800 x 480 and 1280 x 720 at GUI scale 2. The combined profile
+adds the pinned HarvestCraft, Mystical Agriculture and Forestry jars. The
+disabled profile checks that ordinary JEI remains usable without the climate
+category.
+
+The runner reads complete launcher assets from `%APPDATA%/.minecraft/assets`
+by default. Pass `--assets <complete-assets-folder>` or set
+`WEATHER_CLIENT_ASSETS` to use another location. It verifies the original 1.11
+asset index and every indexed object before launch, without modifying them.
+An incomplete runtime can leave Minecraft's current language unavailable and
+crash JEI before a world opens. Client checks therefore require actual assets,
+including language and pack metadata, even when sound is muted.
+See [JEI client results](JEI_CLIENT_1_11_2.md) for the tested layouts and fix.
 
 ## Acceptance scope
 

@@ -7,8 +7,10 @@ Plenty's small winter increase. BOP's winter elapsed time increased more than
 its CPU time, so this is not a claim of zero overhead.
 
 These results apply to Forge **13.20.1.2588** and the pinned builds below. The
-candidate remains local and unpublished; manual gameplay and JEI client
-acceptance remain separate. See [port status](PORTING_1_11_2.md) and
+candidate remains local and unpublished; general manual gameplay remains separate.
+Subsequent [JEI client qualification](JEI_CLIENT_1_11_2.md) changed only JEI class
+files and has its own updated jar hash. Timings here retain the original tested
+candidate. See [port status](PORTING_1_11_2.md) and
 [reproduction instructions](BUILDING.md).
 
 ## Whole-chunk generation

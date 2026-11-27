@@ -55,6 +55,7 @@ public final class ClientProbe extends WeatherProbe.SideProbe {
     private int modeUiStage;
     private GuiScreen modeRoot;
     private TemperatureClientProbe thermal;
+    private zone.moddev.mc.skysrealisticweather.verify.jei.JeiClientProbe jei;
 
     @Override
     public void register() {
@@ -65,6 +66,10 @@ public final class ClientProbe extends WeatherProbe.SideProbe {
     public void tick(TickEvent.ClientTickEvent event) throws ReflectiveOperationException {
         if (event.phase != TickEvent.Phase.END) return;
         Minecraft game = Minecraft.getMinecraft();
+        if (Boolean.getBoolean("skyweather.jeiClient")) {
+            if(jei==null)jei=new zone.moddev.mc.skysrealisticweather.verify.jei.JeiClientProbe();
+            jei.tick(game);return;
+        }
         if (Boolean.getBoolean("skyweather.heatNetwork")) {
             if(thermal==null)thermal=new TemperatureClientProbe();
             thermal.tick(game);return;

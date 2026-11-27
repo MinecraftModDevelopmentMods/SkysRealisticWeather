@@ -64,7 +64,7 @@ All integrations are optional. The table lists the Minecraft versions each integ
 | **Base Metals** | 1.10.2, 1.11.2 | Supplies mercury for the thermometer recipe. Other mods providing the appropriate mercury ingredient can also be used. |
 
 The 1.11.2 entries describe the local port and its pinned integration builds;
-that version is not published yet. JEI client UI acceptance is still pending.
+that version is not published yet. Its packaged JEI client checks are complete.
 See the [version support guide](https://github.com/MinecraftModDevelopmentMods/SkysRealisticWeather/wiki/Version-Support) for current qualification and download status.
 
 ## Tools for players and pack makers
