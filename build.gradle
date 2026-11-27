@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'eclipse'
+    id 'maven-publish'
     id 'net.minecraftforge.renamer' version '1.1.5'
     id 'net.minecraftforge.gradle' version '7.0.34'
 }
@@ -184,6 +185,8 @@ tasks.register('writeReleaseChecksum') {
     }
 }
 
+if (!providers.gradleProperty('weatherProductionOnly').getOrElse('false').toBoolean()) {
+
 sourceSets {
     integrationTest {
         compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
@@ -264,3 +267,9 @@ def packagedControlProbe = renamer.classes(controlProbe) {
     output = layout.buildDirectory.file('verification/probe/weather-control-probe.jar')
 }
 tasks.register('prepareControlProbe') { dependsOn packagedControlProbe, tasks.named('prepareRuntimeProbe') }
+
+}
+
+ext.weatherReleaseJar = releaseJar
+ext.weatherApiJar = apiJar
+apply from: 'gradle/release.gradle'

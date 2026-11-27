@@ -1,6 +1,9 @@
 import groovy.xml.XmlParser
 import groovy.xml.XmlUtil
 
+// Hosted release builds do not prepare optional development profiles.
+if (providers.gradleProperty('weatherProductionOnly').getOrElse('false').toBoolean()) return
+
 def modCoordinates = [
         BoP           : 'biomes-o-plenty-220318:2536549',
         OTG           : 'open-terrain-generator-265894:2530369',

@@ -24,10 +24,10 @@ the entire object as the value of `relations`, for example:
 metadata["relations"] = json.loads(Path("publishing/curseforge-relations.json").read_text())
 ```
 
-The repository currently has no automatic CurseForge uploader, so this file is
-prepared input, not an active publication step. A manual website upload must
-select the matching projects as **Optional Dependency** under Related Projects.
-Uploading the jar or placing this JSON beside it does not submit those relations.
+The MMD release workflow reads this file and submits its entries as optional
+relationships for the selected release. A manual website upload must select
+the matching projects under Related Projects. See [releasing](RELEASING.md)
+for the build, publication and public-download checks.
 
 Keep relations specific to the Minecraft version being uploaded. This list
 excludes RTG, Thaumcraft, AgriCraft and BYG because this port has no qualified

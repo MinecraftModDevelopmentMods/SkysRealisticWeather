@@ -60,9 +60,11 @@ body temperature and survival systems. JEI, Hwyla and The One Probe provide
 crop climate information. Operator validation and JSON reports help diagnose
 pack rules. See [modpack support](docs/PACK_SUPPORT.md).
 
-This is the local **1.11.2 port**, version **0.1.21.111021**. See the
-[port status and integration matrix](docs/PORTING_1_11_2.md) for tested builds
-and remaining acceptance checks.
+This branch is for **Minecraft 1.11.2**, version **0.1.21.111021**. See the
+[compatibility guide](docs/PORTING_1_11_2.md) for the supported mod versions.
+The [changelog](CHANGELOG.md) covers what's changed, and the
+[wiki](https://github.com/MinecraftModDevelopmentMods/SkysRealisticWeather/wiki)
+has guides for players, pack makers and other mod developers.
 
 ## Install
 
@@ -92,4 +94,5 @@ Weather data provided by [Open-Meteo.com](https://open-meteo.com/).
 - [Weather controller and server commands](docs/ADMIN.md)
 - [Build and verification](docs/BUILDING.md)
 - [Languages and translation coverage](docs/LANGUAGES.md)
+- [Preparing a release](docs/RELEASING.md)
 - [Licence](LICENSE) and [credits](NOTICE)

@@ -1,7 +1,7 @@
 # Minecraft 1.11.2 port
 
 This checkout targets **Minecraft 1.11.2**, **Forge 13.20.1.2588**, Java 8,
-and stable **32-1.11** mappings. The local candidate is **0.1.21.111021**,
+and stable **32-1.11** mappings. The release version is **0.1.21.111021**,
 with **API 8**, **config 8** and **world settings schema 1**. It starts from
 the merged 1.10.2 implementation at `a4c6f7930c06cd97c2a503deecc6f92137c167f3`.
 
@@ -114,8 +114,9 @@ See `RESULT.md` and artifact-bound receipts in each, including preserved
 unsuccessful attempts. [Build instructions](BUILDING.md)
 explain how to repeat the checks with fresh disposable worlds.
 
-The port is local and unpublished. General manual client gameplay and visual
-acceptance remain separate work. Targeted JEI client checks, automated
-two-client multiplayer and the new whole-chunk baseline are complete for the
-documented scenarios. Published 1.10.2 timings and the 1.10.2 Sylvester pack
-are not used to claim 1.11.2 coverage. No player world is launched by these tests.
+This version has been accepted for release after local gameplay testing.
+Targeted JEI client checks, automated two-client multiplayer and the new
+whole-chunk baseline cover the documented scenarios. They do not establish
+compatibility with every modpack. Published 1.10.2 timings and the 1.10.2
+Sylvester pack are not used to claim 1.11.2 coverage. No player world is
+launched by the automated tests.

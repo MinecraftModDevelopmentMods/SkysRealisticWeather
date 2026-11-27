@@ -63,9 +63,8 @@ All integrations are optional. The table lists the Minecraft versions each integ
 | **The Lost Cities** | 1.10.2, 1.11.2 | Seasonal snow and ice generation in Lost Cities worlds. |
 | **Base Metals** | 1.10.2, 1.11.2 | Supplies mercury for the thermometer recipe. Other mods providing the appropriate mercury ingredient can also be used. |
 
-The 1.11.2 entries describe the local port and its pinned integration builds;
-that version is not published yet. Its packaged JEI client checks are complete.
-See the [version support guide](https://github.com/MinecraftModDevelopmentMods/SkysRealisticWeather/wiki/Version-Support) for current qualification and download status.
+The table is kept by Minecraft version so you can check the integrations for
+your pack. See the [version support guide](https://github.com/MinecraftModDevelopmentMods/SkysRealisticWeather/wiki/Version-Support) for tested builds and download status.
 
 ## Tools for players and pack makers
 
