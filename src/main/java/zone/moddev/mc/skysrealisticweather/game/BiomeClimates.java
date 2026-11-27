@@ -28,7 +28,7 @@ public final class BiomeClimates {
         Map<Biome, BiomeClimate> byBiome = new HashMap<>();
         for (Biome biome : Biome.REGISTRY) {
             BiomeClimate climate = definitions.get(biome.getRegistryName());
-            if (climate == null && BiomeDictionary.isBiomeOfType(biome, BiomeDictionary.Type.JUNGLE)) {
+            if (climate == null && BiomeDictionary.hasType(biome, BiomeDictionary.Type.JUNGLE)) {
                 climate = new BiomeClimate(0, 0.35F, BiomeClimate.PrecipitationRule.BIOME_DEFAULT);
             }
             if (climate != null) byBiome.put(biome, climate);
@@ -56,8 +56,8 @@ public final class BiomeClimates {
             default: break;
         }
         return biome.canRain() || biome.getEnableSnow()
-                || includesDryBiomes && (BiomeDictionary.isBiomeOfType(biome, BiomeDictionary.Type.DRY)
-                        || BiomeDictionary.isBiomeOfType(biome, BiomeDictionary.Type.SAVANNA)
-                        || BiomeDictionary.isBiomeOfType(biome, BiomeDictionary.Type.MESA));
+                || includesDryBiomes && (BiomeDictionary.hasType(biome, BiomeDictionary.Type.DRY)
+                        || BiomeDictionary.hasType(biome, BiomeDictionary.Type.SAVANNA)
+                        || BiomeDictionary.hasType(biome, BiomeDictionary.Type.MESA));
     }
 }

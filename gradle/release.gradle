@@ -1,0 +1,223 @@
+import groovy.json.JsonSlurper
+import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
+import java.util.zip.ZipFile
+import org.apache.tools.ant.filters.FixCrLfFilter
+
+// The release jobs all consume these same, audited files.
+ext.releaseFiles = providers.provider {
+    ['', '-sources', '-javadoc', '-api'].collect { "SkysRealisticWeather-${project.version}${it}.jar".toString() }
+}
+def hash = { File file -> MessageDigest.getInstance('SHA-256').digest(file.bytes).encodeHex().toString() }
+def textPatterns = ['**/*.java', '**/*.json', '**/*.lang', '**/*.info', '**/*.mcmeta', '**/*.html',
+        '**/*.js', '**/*.css', '**/*.txt', '**/*.md', '**/element-list', '**/package-list',
+        '**/LICENSE', '**/LICENSE.spdx', '**/NOTICE']
+tasks.withType(Jar).configureEach {
+    filteringCharset = 'UTF-8'
+    filesMatching(textPatterns) {
+        filter(FixCrLfFilter, eol: FixCrLfFilter.CrLf.newInstance('lf'),
+                eof: FixCrLfFilter.AddAsisRemove.newInstance('asis'))
+    }
+}
+['sourcesJar', 'javadocJar'].each { name ->
+    tasks.named(name, Jar) { from(['LICENSE', 'LICENSE.spdx', 'NOTICE']) { into 'META-INF' } }
+}
+
+tasks.register('verifyReleaseMetadata') {
+    group = 'verification'
+    doLast {
+        def mc = project.minecraft_version.tokenize('.')*.toInteger()
+        String suffix = String.format('%d%02d%02d1', mc[0], mc[1], mc[2])
+        if (!(project.version.toString() ==~ /\d+\.\d+\.\d+\.${suffix}/) || project.loader_name != 'forge' ||
+                project.loader_code != '1' || project.java_version != '8' ||
+                project.mod_id != 'skysrealisticweather' || project.curseforge_project_id != '1834635' ||
+                project.release_repository != 'MinecraftModDevelopmentMods/SkysRealisticWeather') {
+            throw new GradleException('Release version, target or project identity is inconsistent')
+        }
+        String header = "## ${project.version}"
+        if (!file('CHANGELOG.md').getText('UTF-8').readLines().contains(header))
+            throw new GradleException("CHANGELOG.md must contain ${header}")
+        def projects = new JsonSlurper().parse(file('publishing/curseforge-relations.json')).projects
+        if (!projects || projects*.slug.toSet().size() != projects.size() || projects.any {
+            !(it.slug ==~ /[a-z0-9-]+/) || it.type != 'optionalDependency'
+        }) throw new GradleException('Invalid or duplicate optional CurseForge relationships')
+    }
+}
+
+tasks.register('verifyReleaseArtifacts') {
+    group = 'verification'
+    dependsOn tasks.named('assemble'), tasks.named('verifyReleaseMetadata')
+    doLast {
+        File libs = layout.buildDirectory.dir('libs').get().asFile
+        releaseFiles.get().each { name ->
+            File artifact = new File(libs, name)
+            if (!artifact.isFile() || artifact.length() == 0) throw new GradleException("Missing ${name}")
+            new ZipFile(artifact).withCloseable { zip ->
+                zip.entries().each { entry ->
+                    String lower = entry.name.toLowerCase(Locale.ROOT)
+                    if (lower.tokenize('/').any { it in ['agents.md', 'agent.md', 'agent-notes', 'agent_notes', '.codex', '.claude'] } ||
+                            lower.contains('/verify/') || lower.contains('/fixture/') || lower.contains('/test/') ||
+                            lower.startsWith('net/minecraft/') || lower.startsWith('net/minecraftforge/'))
+                        throw new GradleException("Unwanted release entry in ${name}: ${entry.name}")
+                    if (!entry.directory) {
+                        byte[] bytes = zip.getInputStream(entry).bytes
+                        if (entry.name.endsWith('.class') && (((bytes[6] & 255) << 8) | (bytes[7] & 255)) != 52)
+                            throw new GradleException("Non-Java-8 class: ${entry.name}")
+                        String content = new String(bytes, StandardCharsets.ISO_8859_1).toLowerCase(Locale.ROOT)
+                        if (content.find(/[a-z]:[\\\/]users[\\\/]|d:[\\\/]skysgrassslabs|ghp_[a-z0-9]{30,}|github_pat_[a-z0-9_]{40,}/))
+                            throw new GradleException("Local path or possible credential in ${name}: ${entry.name}")
+                    }
+                }
+                ['META-INF/LICENSE', 'META-INF/LICENSE.spdx', 'META-INF/NOTICE'].each {
+                    if (zip.getEntry(it) == null) throw new GradleException("${name} is missing ${it}")
+                }
+                if (name.endsWith('-api.jar') && zip.entries().any {
+                    it.name.endsWith('.class') && !it.name.startsWith('zone/moddev/mc/skysrealisticweather/api/')
+                }) throw new GradleException('The API artifact contains implementation classes')
+            }
+        }
+        new ZipFile(new File(libs, releaseFiles.get()[0])).withCloseable { zip ->
+            def metadata = new JsonSlurper().parseText(zip.getInputStream(zip.getEntry('mcmod.info')).getText('UTF-8'))[0]
+            if (metadata.modid != project.mod_id || metadata.version != project.version || metadata.mcversion != project.minecraft_version ||
+                    metadata.containsKey('dependencies') || metadata.containsKey('useDependencyInformation'))
+                throw new GradleException('Packaged mod metadata is inconsistent')
+            def pack = new JsonSlurper().parseText(zip.getInputStream(zip.getEntry('pack.mcmeta')).getText('UTF-8')).pack
+            boolean legacy = project.minecraft_version == '1.10.2'
+            if (pack.pack_format != (legacy ? 2 : 3)) throw new GradleException('Incorrect resource pack format')
+            def locales = ['de_AT','de_AU','de_DE','en_CA','en_EN','en_GB','en_PT','en_US','es_ES','es_MX',
+                    'fr_CA','fr_FR','ja_JP','ko_KR','pt_BR','pt_PT','ru_RU','zh_CN']
+            def read = { String locale ->
+                String name = "assets/${project.mod_id}/lang/${legacy ? locale : locale.toLowerCase(Locale.ROOT)}.lang"
+                def entry = zip.getEntry(name)
+                if (entry == null) throw new GradleException("Missing ${name}")
+                byte[] bytes = zip.getInputStream(entry).bytes
+                String text = StandardCharsets.UTF_8.newDecoder().decode(java.nio.ByteBuffer.wrap(bytes)).toString()
+                if (text.startsWith('\uFEFF') || text.contains('\uFFFD')) throw new GradleException("Invalid encoding: ${name}")
+                def result = [:]
+                text.readLines().findAll { it && !it.startsWith('#') }.each { line ->
+                    int equals = line.indexOf('=')
+                    if (equals < 1 || equals == line.length() - 1 || result.put(line.substring(0, equals), line.substring(equals + 1)) != null)
+                        throw new GradleException("Invalid or duplicate language key in ${name}")
+                }
+                return result
+            }
+            def english = read('en_US')
+            locales.each { locale ->
+                if (read(locale).keySet() != english.keySet()) throw new GradleException("Incomplete ${locale} translations")
+            }
+            Set<String> packaged = zip.entries().findAll { it.name.startsWith("assets/${project.mod_id}/lang/") && it.name.endsWith('.lang') }*.name as Set
+            if (packaged.size() != locales.size()) throw new GradleException('Unexpected language files or filename casing')
+            if (zip.getEntry('zone/moddev/mc/skysrealisticweather/WeatherMod.class') == null)
+                throw new GradleException('Main mod class is missing')
+        }
+    }
+}
+
+tasks.register('writeReleaseChecksums') {
+    group = 'verification'
+    dependsOn tasks.named('verifyReleaseArtifacts'), tasks.named('writeReleaseChecksum')
+    def output = layout.buildDirectory.file('release/SHA256SUMS')
+    outputs.file(output)
+    inputs.files(releaseFiles.map { names -> names.collect { layout.buildDirectory.file("libs/${it}") } })
+    doLast {
+        File target = output.get().asFile
+        target.parentFile.mkdirs()
+        target.setText(releaseFiles.get().collect { "${hash(layout.buildDirectory.file('libs/' + it).get().asFile)}  ${it}" }.join('\n') + '\n', 'UTF-8')
+    }
+}
+
+def validateBundle = { File bundle ->
+    Set<String> expected = (releaseFiles.get() + ['SHA256SUMS','CHANGELOG.md','curseforge-relations.json']) as Set
+    if ((bundle.listFiles()?.findAll { it.isFile() }*.name as Set) != expected)
+        throw new GradleException('Prepared release bundle has missing or unexpected files')
+    Set<String> seen = [] as Set
+    new File(bundle, 'SHA256SUMS').readLines('UTF-8').each { line ->
+        def match = line =~ /^([0-9a-fA-F]{64})  ([A-Za-z0-9._-]+)$/
+        if (!match.matches() || !expected.contains(match[0][2]) || !seen.add(match[0][2]) ||
+                !hash(new File(bundle, match[0][2])).equalsIgnoreCase(match[0][1]))
+            throw new GradleException('Prepared artifact checksum mismatch or invalid checksum entry')
+    }
+    if (seen != releaseFiles.get().toSet()) throw new GradleException('Prepared release needs four artifact checksums')
+    if (new File(bundle, 'CHANGELOG.md').getText('UTF-8') != file('CHANGELOG.md').getText('UTF-8') ||
+            new File(bundle, 'curseforge-relations.json').getText('UTF-8') != file('publishing/curseforge-relations.json').getText('UTF-8'))
+        throw new GradleException('Prepared release notes or optional relationships changed')
+}
+tasks.register('verifyPreparedReleaseArtifacts') {
+    doLast { validateBundle(file(providers.gradleProperty('preparedReleaseDir').get())) }
+}
+tasks.register('verifyReleaseBundleContract') {
+    dependsOn tasks.named('writeReleaseChecksums')
+    doLast {
+        File bundle = layout.buildDirectory.dir("verification/release-contract/${project.version}").get().asFile
+        bundle.mkdirs()
+        copy { from layout.buildDirectory.dir('libs'); include releaseFiles.get(); into bundle }
+        copy { from 'CHANGELOG.md', 'publishing/curseforge-relations.json', layout.buildDirectory.file('release/SHA256SUMS'); into bundle }
+        validateBundle(bundle)
+        File main = new File(bundle, releaseFiles.get()[0])
+        byte[] original = main.bytes
+        try {
+            main.append('changed', 'UTF-8')
+            boolean rejected = false
+            try { validateBundle(bundle) } catch (GradleException expected) { rejected = expected.message.contains('checksum mismatch') }
+            if (!rejected) throw new GradleException('Modified release artifact was accepted')
+        } finally { main.bytes = original }
+    }
+}
+tasks.named('check') { dependsOn 'verifyReleaseBundleContract' }
+
+tasks.register('compilePublicApiConsumer', JavaCompile) {
+    group = 'verification'
+    dependsOn weatherApiJar
+    source fileTree('src/apiTest/java')
+    classpath = files(weatherApiJar.flatMap { it.archiveFile }) + sourceSets.main.compileClasspath
+    destinationDirectory = layout.buildDirectory.dir('verification/api-consumer/classes')
+    javaCompiler = javaToolchains.compilerFor { languageVersion = JavaLanguageVersion.of(8) }
+    options.encoding = 'UTF-8'
+}
+tasks.named('check') { dependsOn 'compilePublicApiConsumer' }
+
+publishing {
+    publications {
+        register('mavenJava', MavenPublication) {
+            artifactId = 'SkysRealisticWeather'
+            if (providers.gradleProperty('preparedReleaseDir').isPresent()) {
+                releaseFiles.get().eachWithIndex { name, index ->
+                    artifact(file("${providers.gradleProperty('preparedReleaseDir').get()}/${name}")) {
+                        extension = 'jar'
+                        if (index > 0) classifier = ['sources','javadoc','api'][index - 1]
+                    }
+                }
+            } else {
+                artifact weatherReleaseJar
+                artifact tasks.named('sourcesJar')
+                artifact tasks.named('javadocJar')
+                artifact weatherApiJar
+            }
+            pom {
+                name = project.mod_name
+                description = project.mod_description
+                url = 'https://github.com/' + project.release_repository
+                licenses { license { name = 'LGPL-2.1-only'; url = 'https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt' } }
+                scm { url = 'https://github.com/' + project.release_repository; connection = 'scm:git:' + url.get() + '.git' }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name = 'release'
+            url = uri(providers.environmentVariable('MAVEN_UPLOAD_URL').getOrElse(layout.buildDirectory.dir('forbidden-local-release').get().asFile.toURI().toString()))
+            credentials {
+                username = providers.environmentVariable('MAVEN_UPLOAD_USERNAME').getOrElse('')
+                password = providers.environmentVariable('MAVEN_UPLOAD_PASSWORD').getOrElse('')
+            }
+        }
+    }
+}
+tasks.withType(PublishToMavenRepository).configureEach {
+    dependsOn 'verifyPreparedReleaseArtifacts'
+    doFirst {
+        if (project.release_enabled != 'true' || !providers.environmentVariable('MAVEN_UPLOAD_URL').getOrElse('').startsWith('https://') ||
+                ['MAVEN_UPLOAD_USERNAME','MAVEN_UPLOAD_PASSWORD'].any { !providers.environmentVariable(it).isPresent() })
+            throw new GradleException('Maven release requires an enabled target and remote HTTPS credentials')
+    }
+}

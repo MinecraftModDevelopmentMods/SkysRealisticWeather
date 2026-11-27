@@ -62,8 +62,8 @@ final class PresetEditorScreen extends GuiScreen {
         for (int index = 0; index < draft.length; index++) {
             String label = index == 0 ? "Overview" : draft[index][0].trim();
             if (label.isEmpty()) label = Preset.defaultPhaseLabel(SEASONS[index - 1]);
-            if (fontRendererObj.getStringWidth(label) > tab - 9) {
-                label = fontRendererObj.trimStringToWidth(label, tab - 9 - fontRendererObj.getStringWidth("...")) + "...";
+            if (fontRenderer.getStringWidth(label) > tab - 9) {
+                label = fontRenderer.trimStringToWidth(label, tab - 9 - fontRenderer.getStringWidth("...")) + "...";
             }
             GuiButton button = new GuiButton(index, start + index * tab, 29, tab - 2, 20, label);
             button.enabled = index != page;
@@ -72,7 +72,7 @@ final class PresetEditorScreen extends GuiScreen {
         int[] limits = page == 0 ? OVERVIEW_LIMITS : PHASE_LIMITS;
         int fieldWidth = Math.min(width / 2, 270);
         for (int index = 0; index < draft[page].length; index++) {
-            GuiTextField field = new GuiTextField(index, fontRendererObj, width / 2, 59 + index * 21, fieldWidth - 10, 16);
+            GuiTextField field = new GuiTextField(index, fontRenderer, width / 2, 59 + index * 21, fieldWidth - 10, 16);
             field.setMaxStringLength(limits[index]);
             field.setText(draft[page][index]);
             inputs.add(field);
@@ -176,14 +176,14 @@ final class PresetEditorScreen extends GuiScreen {
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         drawDefaultBackground();
-        drawCenteredString(fontRendererObj, editing ? "Edit Weather Preset" : "New Weather Preset", width / 2, 12, 0xFFFFFF);
+        drawCenteredString(fontRenderer, editing ? "Edit Weather Preset" : "New Weather Preset", width / 2, 12, 0xFFFFFF);
         String[] labels = page == 0 ? OVERVIEW_FIELDS : PHASE_FIELDS;
         for (int index = 0; index < inputs.size(); index++) {
             String label = labels[index] + (page != 0 && index == 2 ? " (" + unit.symbol + ")" : "");
-            drawString(fontRendererObj, label, width / 2 - fontRendererObj.getStringWidth(label) - 10, 63 + index * 21, 0xD6E5F3);
+            drawString(fontRenderer, label, width / 2 - fontRenderer.getStringWidth(label) - 10, 63 + index * 21, 0xD6E5F3);
             inputs.get(index).drawTextBox();
         }
-        if (error != null) drawCenteredString(fontRendererObj, error, width / 2, height - 39, 0xFFAAAA);
+        if (error != null) drawCenteredString(fontRenderer, error, width / 2, height - 39, 0xFFAAAA);
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
 }

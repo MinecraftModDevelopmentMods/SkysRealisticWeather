@@ -26,6 +26,7 @@ public final class PlantGrowthHooks {
     public static final PlantGrowthHooks INSTANCE = new PlantGrowthHooks();
     private static final Map<Class<?>, Map<String, Method>> METHODS = new ConcurrentHashMap<>();
     private static final ThreadLocal<Boolean> FERTILIZING = ThreadLocal.withInitial(() -> false);
+    private static final ThreadLocal<Deque<World>> POPULATING = new ThreadLocal<>();
     private static final Map<Class<?>, Method> SAPLING_FERTILIZERS = new ConcurrentHashMap<>();
     private static Field forestryManager;
     private static Method forestryPosition, forestryTemperature;
@@ -59,6 +60,7 @@ public final class PlantGrowthHooks {
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void tree(SaplingGrowTreeEvent event) {
+        if (populating(event.getWorld())) return;
         if (!event.getWorld().isBlockLoaded(event.getPos(), false)) return;
         net.minecraft.block.Block block = event.getWorld().getBlockState(event.getPos()).getBlock();
         if (block instanceof net.minecraft.block.BlockSapling && PlantHookStatus.fallback("net.minecraft.block.BlockSapling")
@@ -92,12 +94,26 @@ public final class PlantGrowthHooks {
     }
 
     public static boolean allow(World world, BlockPos pos, Random random) {
+        if (populating(world)) return true;
         WeatherState.Frame frame = WeatherState.frame(world);
         if (world.isRemote || frame == null || !frame.active() || !frame.settings.farming.enabled || !world.isBlockLoaded(pos, false)) return true;
         PlantGrowthSample sample = sample(world, pos);
         float multiplier = sample == null ? 1 : sample.naturalGrowthMultiplier;
         // Preserve native RNG traces exactly for unmodified, ideal and fully blocked growth.
         return multiplier >= 1 || multiplier > 0 && random.nextFloat() < multiplier;
+    }
+
+    /** Preserve native generation callbacks, including parks that explicitly grow saplings. */
+    public static void populateChunk(net.minecraft.world.chunk.IChunkGenerator generator,int x,int z,net.minecraft.world.chunk.Chunk chunk) {
+        Deque<World> worlds=POPULATING.get();
+        if(worlds==null){worlds=new ArrayDeque<>();POPULATING.set(worlds);}
+        worlds.push(chunk.getWorld());
+        try {generator.populate(x,z);}
+        finally {worlds.pop();if(worlds.isEmpty())POPULATING.remove();}
+    }
+
+    private static boolean populating(World world) {
+        Deque<World> worlds=POPULATING.get();return worlds!=null&&worlds.contains(world);
     }
 
     public static PlantGrowthSample sample(World world, BlockPos pos) {

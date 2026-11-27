@@ -276,7 +276,7 @@ public final class WeatherAdminScreen extends GuiScreen {
     }
 
     private void field(String key, int x, int y, int width, String initial) {
-        GuiTextField field = new GuiTextField(fields.size(), fontRendererObj, x, y, width, 16);
+        GuiTextField field = new GuiTextField(fields.size(), fontRenderer, x, y, width, 16);
         field.setMaxStringLength(16);
         field.setText(draft.getOrDefault(key, initial));
         fields.put(key, field);
@@ -345,39 +345,39 @@ public final class WeatherAdminScreen extends GuiScreen {
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         drawRect(8, 7, 8 + panelWidth, 238, 0xED15202D);
         drawRect(8, 7, 8 + panelWidth, 9, 0xFF6DAAC7);
-        drawString(fontRendererObj, "Weather Controller", 16, 14, 0xFFFFFF);
-        drawString(fontRendererObj, fit(worldStatus(), panelWidth - 16), 16, 27, 0xC1DEEB);
+        drawString(fontRenderer, "Weather Controller", 16, 14, 0xFFFFFF);
+        drawString(fontRenderer, fit(worldStatus(), panelWidth - 16), 16, 27, 0xC1DEEB);
         int cell = (panelWidth - 16) / 4;
         switch (page) {
             case WEATHER:
                 int right = 21 + (panelWidth - 24) * 56 / 100;
-                drawString(fontRendererObj, "Seconds", right, 93, 0xC1DEEB);
-                drawString(fontRendererObj, "Intensity (0.01-1)", right, 124, 0xC1DEEB);
+                drawString(fontRenderer, "Seconds", right, 93, 0xC1DEEB);
+                drawString(fontRenderer, "Intensity (0.01-1)", right, 124, 0xC1DEEB);
                 break;
             case CALENDAR:
-                drawString(fontRendererObj, "Jump to a phase on day", 16, 98, 0xC1DEEB);
+                drawString(fontRenderer, "Jump to a phase on day", 16, 98, 0xC1DEEB);
                 break;
             case CLIMATE:
                 String preset = snapshot.presets.getOrDefault(snapshot.preset, "Custom");
-                drawString(fontRendererObj, fit(preset, cell * 2 - 6), 16, 71, 0xC1DEEB);
-                drawString(fontRendererObj, "Strength", 16, 98, 0xC1DEEB);
+                drawString(fontRenderer, fit(preset, cell * 2 - 6), 16, 71, 0xC1DEEB);
+                drawString(fontRenderer, "Strength", 16, 98, 0xC1DEEB);
                 int column = (panelWidth - 16) / PHASE_FIELDS.length;
                 for (int index = 0; index < PHASE_FIELDS.length; index++) {
-                    drawString(fontRendererObj, fit(index == 1 ? "Î”" + zone.moddev.mc.skysrealisticweather.climate.WeatherConfiguration.temperatureUnit().symbol : PHASE_FIELDS[index], column - 3), 16 + index * column, 137, 0xC1DEEB);
+                    drawString(fontRenderer, fit(index == 1 ? "Î”" + zone.moddev.mc.skysrealisticweather.climate.WeatherConfiguration.temperatureUnit().symbol : PHASE_FIELDS[index], column - 3), 16 + index * column, 137, 0xC1DEEB);
                 }
                 break;
             case EFFECTS:
-                drawString(fontRendererObj, "Changes apply to the whole Overworld.", 16, 148, 0xC1DEEB);
+                drawString(fontRenderer, "Changes apply to the whole Overworld.", 16, 148, 0xC1DEEB);
                 break;
             default: break;
         }
         String visibleFeedback = fit(feedback, panelWidth - 16);
-        drawString(fontRendererObj, visibleFeedback, 16, 204, error ? 0xFFAAAA : 0xBDDDA8);
+        drawString(fontRenderer, visibleFeedback, 16, 204, error ? 0xFFAAAA : 0xBDDDA8);
         fields.values().forEach(GuiTextField::drawTextBox);
         super.drawScreen(mouseX, mouseY, partialTicks);
         if (!visibleFeedback.equals(feedback) && mouseX >= 16 && mouseX <= panelWidth
                 && mouseY >= 204 && mouseY < 213) {
-            drawHoveringText(fontRendererObj.listFormattedStringToWidth(feedback, panelWidth - 16), mouseX, mouseY);
+            drawHoveringText(fontRenderer.listFormattedStringToWidth(feedback, panelWidth - 16), mouseX, mouseY);
         }
     }
 
@@ -399,8 +399,8 @@ public final class WeatherAdminScreen extends GuiScreen {
     }
 
     private String fit(String value, int pixels) {
-        if (fontRendererObj.getStringWidth(value) <= pixels) return value;
-        if (pixels < fontRendererObj.getStringWidth("...")) return "";
-        return fontRendererObj.trimStringToWidth(value, pixels - fontRendererObj.getStringWidth("...")) + "...";
+        if (fontRenderer.getStringWidth(value) <= pixels) return value;
+        if (pixels < fontRenderer.getStringWidth("...")) return "";
+        return fontRenderer.trimStringToWidth(value, pixels - fontRenderer.getStringWidth("...")) + "...";
     }
 }

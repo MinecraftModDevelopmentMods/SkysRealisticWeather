@@ -70,6 +70,8 @@ public final class PlantGrowthProbe {
         world.getChunkFromBlockCoords(p);
         byte[] biomes = world.getChunkFromBlockCoords(p).getBiomeArray(); Arrays.fill(biomes, (byte) BiomeId.plains());
         for (net.minecraft.util.EnumFacing side : net.minecraft.util.EnumFacing.Plane.HORIZONTAL) world.setBlockToAir(p.offset(side));
+        // Clear the previous plant before laying soil: 1.11 farmland rejects a solid block above it.
+        world.setBlockToAir(p); world.setBlockToAir(p.up());
         world.setBlockState(p.down(), Blocks.FARMLAND.getDefaultState().withProperty(BlockFarmland.MOISTURE, 7), 2);
         world.setBlockState(p.up(), Blocks.LEAVES.getDefaultState(), 2);
         world.setBlockState(p.east(2), Blocks.GLOWSTONE.getDefaultState(), 2);
@@ -79,6 +81,8 @@ public final class PlantGrowthProbe {
         if (state.getBlock() == Blocks.COCOA) world.setBlockState(p.offset(state.getValue(BlockCocoa.FACING)), Blocks.LOG.getDefaultState().withProperty(BlockOldLog.VARIANT, BlockPlanks.EnumType.JUNGLE), 2);
         world.setBlockState(p, state, 2);
         world.getChunkFromBlockCoords(p).generateSkylightMap();
+        world.setLightFor(net.minecraft.world.EnumSkyBlock.BLOCK, p, 15);
+        world.setLightFor(net.minecraft.world.EnumSkyBlock.BLOCK, p.up(), 15);
     }
 
     private static final class BiomeId { static int plains() { return net.minecraft.world.biome.Biome.getIdForBiome(Biomes.PLAINS); } }
@@ -173,6 +177,7 @@ public final class PlantGrowthProbe {
         mappingContracts();
         environmentContracts();
         saplingFertilizer();
+        populationScope();
         if (Loader.isModLoaded("agricraft")) agricraft();
         if (Loader.isModLoaded("forestry")) forestry();
         require(PlantHookStatus.states().values().stream().allMatch(s -> s.equals("attached")), "all present adapters attached " + PlantHookStatus.states());
@@ -242,13 +247,13 @@ public final class PlantGrowthProbe {
             IProperty property = age(state);
             IBlockState mature = state.withProperty(property, (Comparable) Collections.max(property.getAllowedValues()));
             net.minecraft.item.Item product = block.getItemDropped(mature, new Random(0), 0);
-            if (product != null) {
+            if (product != null && product != Items.AIR) {
                 net.minecraft.item.ItemStack stack = new net.minecraft.item.ItemStack(product, 1, block.damageDropped(mature));
                 require(PlantItems.resolve(stack, world, pos).stream().anyMatch(p -> p.id.equals(block.getRegistryName().toString())), "harvest identity " + block.getRegistryName());
                 require(tooltip(stack).contains("Here:"), "harvest tooltip " + block.getRegistryName()); resolved++;
             }
             net.minecraft.item.Item seed = block.getItemDropped(state, new Random(0), 0);
-            if (seed != null) {
+            if (seed != null && seed != Items.AIR) {
                 net.minecraft.item.ItemStack stack = new net.minecraft.item.ItemStack(seed, 1, block.damageDropped(state));
                 require(PlantItems.resolve(stack, world, pos).stream().anyMatch(p -> p.id.equals(block.getRegistryName().toString())), "seed identity " + block.getRegistryName());
             }
@@ -291,7 +296,7 @@ public final class PlantGrowthProbe {
         BlockPos unloaded = new BlockPos(900008, 81, 900008);
         require(!world.isBlockLoaded(unloaded, false) && !WeatherApi.getPlantGrowth(world, unloaded).isPresent()
                 && !world.isBlockLoaded(unloaded, false), "plant API never loads terrain");
-        require(!WeatherApi.getPlantGrowth(world.getMinecraftServer().worldServerForDimension(-1), pos).isPresent(), "unsupported dimension query");
+        require(!WeatherApi.getPlantGrowth(world.getMinecraftServer().getWorld(-1), pos).isPresent(), "unsupported dimension query");
         Map<String, PlantGrowthProfile> registration = Collections.singletonMap("minecraft:wheat", PlantGrowthProfile.EXEMPT);
         FarmingSettings override = new FarmingSettings(true, true, true, true, true, FarmingSettings.defaultProfiles(), new String[0], registration);
         frame(-0.3F, override); require(WeatherApi.getPlantGrowth(world, pos).get().naturalGrowthMultiplier == 1, "API overrides bundled");
@@ -375,6 +380,35 @@ public final class PlantGrowthProbe {
         }
     }
 
+    private void populationScope() {
+        IBlockState sapling=Blocks.SAPLING.getDefaultState().withProperty(BlockSapling.TYPE,BlockPlanks.EnumType.ACACIA);
+        pad(pos,sapling);frame(-0.3F,startup.farming);
+        require(!net.minecraftforge.event.terraingen.TerrainGen.saplingGrowTree(world,new Random(1),pos),"natural cold tree remains gated");
+        net.minecraft.world.chunk.IChunkGenerator inner=populationGenerator(() -> {
+            require(net.minecraftforge.event.terraingen.TerrainGen.saplingGrowTree(world,new Random(1),pos),"nested population keeps native trees");
+            throw new IllegalStateException("population fixture");
+        });
+        net.minecraft.world.chunk.IChunkGenerator outer=populationGenerator(() -> {
+            require(PlantGrowthHooks.allow(world,pos,new Random(1)),"population bypasses farming gate");
+            try{PlantGrowthHooks.populateChunk(inner,0,0,world.getChunkFromBlockCoords(pos));}
+            catch(IllegalStateException expected){require(expected.getMessage().equals("population fixture"),"native generator exception preserved");}
+            require(net.minecraftforge.event.terraingen.TerrainGen.saplingGrowTree(world,new Random(1),pos),"outer population scope restored after nested failure");
+        });
+        PlantGrowthHooks.populateChunk(outer,0,0,world.getChunkFromBlockCoords(pos));
+        require(!net.minecraftforge.event.terraingen.TerrainGen.saplingGrowTree(world,new Random(1),pos),"natural gate restored after population");
+        try{PlantGrowthHooks.populateChunk(inner,0,0,world.getChunkFromBlockCoords(pos));}
+        catch(IllegalStateException expected){require(expected.getMessage().equals("population fixture"),"top-level population exception preserved");}
+        require(!PlantGrowthHooks.allow(world,pos,new Random(1)),"population scope cleared after failure");
+    }
+
+    private static net.minecraft.world.chunk.IChunkGenerator populationGenerator(Runnable callback) {
+        return (net.minecraft.world.chunk.IChunkGenerator)Proxy.newProxyInstance(net.minecraft.world.chunk.IChunkGenerator.class.getClassLoader(),
+                new Class[]{net.minecraft.world.chunk.IChunkGenerator.class},(proxy,method,args) -> {
+                    if(method.getName().equals("populate")||method.getName().equals("func_185931_b")){callback.run();return null;}
+                    throw new UnsupportedOperationException(method.getName());
+                });
+    }
+
     private static Object invoke(Object target, String name, Object... args) throws Exception {
         for (Method method : target.getClass().getMethods()) if (method.getName().equals(name) && method.getParameterCount() == args.length) {
             method.setAccessible(true); return method.invoke(target, args);
@@ -419,30 +453,31 @@ public final class PlantGrowthProbe {
     private void forestry() throws Exception {
         pad(pos, Blocks.WHEAT.getDefaultState()); frame(1.0F, startup.farming);
         Object manager = Class.forName("forestry.api.core.ForestryAPI").getField("climateManager").get(null);
-        require(Math.abs(((Number) invoke(manager, "getTemperature", world, pos)).floatValue() - WeatherApi.getTemperature(world, pos).getAsDouble()) < 0.0001, "Forestry ambient temperature bridge");
-        require(Math.abs(((Number) invoke(manager, "getHumidity", world, pos)).floatValue() - 0.5F) < 0.0001, "Forestry ambient humidity proxy");
+        require(Math.abs(((Number) invoke(invoke(manager, "getInfo", world, pos), "getTemperature")).floatValue() - WeatherApi.getTemperature(world, pos).getAsDouble()) < 0.0001, "Forestry ambient temperature bridge");
+        require(Math.abs(((Number) invoke(invoke(manager, "getInfo", world, pos), "getHumidity")).floatValue() - 0.5F) < 0.0001, "Forestry ambient humidity proxy");
         Class<?> positionType = Class.forName("forestry.api.climate.IClimatePosition");
         Class<?> regionType = Class.forName("forestry.api.climate.IClimateRegion");
         Object position = Proxy.newProxyInstance(positionType.getClassLoader(), new Class[] {positionType}, (proxy, method, args) -> {
             switch (method.getName()) { case "getTemperature": return 0.8F; case "getHumidity": return 0.73F;
+                case "getInfo": return invoke(manager, "createInfo", 0.8F, 0.73F);
                 case "equals": return proxy == args[0]; case "hashCode": return System.identityHashCode(proxy); default: return null; }
         });
         Object region = Proxy.newProxyInstance(regionType.getClassLoader(), new Class[] {regionType}, (proxy, method, args) -> {
-            switch (method.getName()) { case "getWorld": return world; case "getPositions": return Collections.singletonMap(pos, position);
+            switch (method.getName()) { case "getWorld": return world; case "getPosition": return pos.equals(args[0]) ? position : null; case "getPositions": return Collections.singletonMap(pos, position);
                 case "getSources": return Collections.emptyList(); case "equals": return proxy == args[0];
                 case "hashCode": return System.identityHashCode(proxy); default: return null; }
         });
         invoke(manager, "addRegion", region);
         frame(-0.3F, startup.farming);
-        require(((Number) invoke(manager, "getTemperature", world, pos)).floatValue() == 0.8F, "Forestry controlled temperature retained");
-        require(((Number) invoke(manager, "getHumidity", world, pos)).floatValue() == 0.73F, "Forestry controlled humidity retained");
+        require(((Number) invoke(invoke(manager, "getInfo", world, pos), "getTemperature")).floatValue() == 0.8F, "Forestry controlled temperature retained");
+        require(((Number) invoke(invoke(manager, "getInfo", world, pos), "getHumidity")).floatValue() == 0.73F, "Forestry controlled humidity retained");
         PlantGrowthSample sample = WeatherApi.getPlantGrowth(world, pos).get();
         require(sample.controlledClimate && sample.naturalGrowthMultiplier == 1, "ordinary crops recognise controlled climate");
         require(tooltip(new net.minecraft.item.ItemStack(Items.WHEAT_SEEDS)).contains("controlled climate")
                 && tooltip(new net.minecraft.item.ItemStack(Items.WHEAT_SEEDS)).contains("Suitable; normal"), "tooltip uses Forestry controlled temperature");
         invoke(manager, "removeRegion", region);
         frame(1.0F, startup.farming.withEnabled(false));
-        require(((Number) invoke(manager, "getTemperature", world, pos)).floatValue() == Biomes.PLAINS.getTemperature(), "Forestry native fallback with master disabled");
+        require(((Number) invoke(invoke(manager, "getInfo", world, pos), "getTemperature")).floatValue() == Biomes.PLAINS.getTemperature(), "Forestry native fallback with master disabled");
         System.out.println("PLANT_FORESTRY PASS");
     }
 

@@ -23,7 +23,7 @@ public final class TemperaturePreferenceMessage implements IMessage {
     }
     public static final class Handler implements IMessageHandler<TemperaturePreferenceMessage, IMessage> {
         @Override public IMessage onMessage(TemperaturePreferenceMessage message, MessageContext context) {
-            EntityPlayerMP player = context.getServerHandler().playerEntity;
+            EntityPlayerMP player = context.getServerHandler().player;
             player.getServerWorld().addScheduledTask(() -> message.apply(player));
             return null;
         }

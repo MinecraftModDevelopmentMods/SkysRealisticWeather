@@ -28,10 +28,10 @@ else:
  directory.mkdir();(directory/'mods').mkdir();(directory/'scripts').mkdir()
  if args.disabled:
   (directory/'config').mkdir();(directory/'config/skysrealisticweather.cfg').write_text('integrations {\n'+''.join(' B:'+key+'=false\n' for key in ['crafttweaker','toughasnails','jei','waila','theoneprobe'])+'}\n')
-fixture=project/'build/verification/worldgen-performance/whole-chunk-v1/1-vanilla'
+fixture=project/'build/verification/runtime-fixture'
 forge=next(fixture.glob('forge-*-universal.jar')).name
 if args.phase=='contracts':
- for name in [forge,'minecraft_server.1.10.2.jar','eula.txt','ops.json','whitelist.json','banned-ips.json','banned-players.json']:shutil.copy2(fixture/name,directory/name)
+ for name in [forge,'minecraft_server.1.11.2.jar','eula.txt','ops.json','whitelist.json','banned-ips.json','banned-players.json']:shutil.copy2(fixture/name,directory/name)
  quoted=lambda path:"'"+str(path).replace("'","''")+"'"
  subprocess.run(['powershell','-NoProfile','-Command','New-Item -ItemType Junction -Path '+quoted(directory/'libraries')+' -Target '+quoted((fixture/'libraries').resolve())+' | Out-Null'],check=True)
  props=(fixture/'server.properties').read_text()
@@ -39,13 +39,13 @@ if args.phase=='contracts':
   pattern=r'^'+re.escape(key)+'=.*';props=re.sub(pattern,key+'='+value,props,flags=re.M) if re.search(pattern,props,re.M) else props+'\n'+key+'='+value
  (directory/'server.properties').write_text(props)
  (directory/'scripts/weather.zs').write_text('import mods.skysrealisticweather.Climate;\nClimate.exemptCrop("minecraft:wheat");\nClimate.mapBiome("minecraft:plains","TROPICAL_MONSOON");\n',encoding='utf-8')
-dependencies={'crafttweaker':['CraftTweaker-1.10.2-3.0.26.jar'],'tan':['ToughAsNails-1.9.4-1.1.1.jar'],
- 'jei':['jei_1.10.2-3.14.7.420.jar'],'hwyla':['Hwyla-1.8.17-B31_1.10.2.jar'],'top':['compatlayer-253729-2532012.jar','theoneprobe-1.1x-1.4.19.jar'],'core':[]}
+dependencies={'crafttweaker':['CraftTweaker.jar'],'tan':['ToughAsNails.jar'],
+ 'jei':['JEI.jar'],'hwyla':['Hwyla.jar'],'top':['CompatLayer.jar','TheOneProbe.jar'],'core':[]}
 dependencies['combined']=sum([dependencies[key] for key in ['crafttweaker','tan','jei','hwyla','top']],[])
-dependencies['full']=dependencies['combined']+["Pam's HarvestCraft 1.10.2j.jar",'agricraft-2.0.0-0.11.0-a21.jar','infinitylib-0.11.0.jar','mysticalagriculture-1.10.2-1.5.10.jar','forestry_1.10.2-5.2.17.388.jar']
+dependencies['full']=dependencies['combined']+["HarvestCraft.jar",'MysticalAgriculture.jar','Forestry.jar']
 for name in dependencies[args.profile]:
- source=project/'build/verification/pack-support-review'/name
- if not source.exists():source=project/'build/verification/plant-growth-review'/name
+ source=project/'build/compatibility-mods/published'/name
+ if not source.exists():source=project/'build/compatibility-mods/published'/name
  shutil.copy2(source,directory/'mods'/name)
 for jar in [main,probe]:shutil.copy2(jar,directory/'mods'/jar.name)
 thirdparty={name:digest(directory/'mods'/name) for name in dependencies[args.profile]}

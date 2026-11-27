@@ -69,7 +69,7 @@ profile. Changing general gameplay options keeps the preset selected.
 The `biome_climates` section maps biome registry IDs to climate preset IDs.
 Startup adds missing entries for registered vanilla and mod biomes. The starter
 mappings cover vanilla, Biomes O' Plenty and known Overworld biomes from
-Thaumcraft, AbyssalCraft and Vampirism. Other registered biomes use Forge tags,
+AbyssalCraft and Vampirism. Other registered biomes use Forge tags,
 temperature, rainfall and descriptive biome names to choose a default.
 GeographiCraft and BiomeTweaker edits are read before these defaults are
 generated. Existing mapping entries take precedence.
@@ -165,8 +165,8 @@ mod, existing snow and ice behave as standard Minecraft blocks.
 
 ### Snow and ice on new chunks
 
-The standard Overworld, Biomes O' Plenty, RTG, The Lost Cities and Open Terrain
-Generator v21 use local weather during their snow and ice pass. A cold storm can
+The standard Overworld, Biomes O' Plenty, The Lost Cities and Open Terrain
+Generator v9 use local weather during their snow and ice pass. A cold storm can
 leave a fresh snow layer on newly explored grassland. Cold, clear weather
 can freeze exposed water, and naturally cold surfaces can retain a dusting
 between storms. Warm weather skips the seasonal surface deposits. The mod
@@ -197,7 +197,7 @@ using seasonal snow and thaw during normal play. Superflat and generators
 without a seasonal integration use their own population rules.
 
 For results with other Overworld generators and biome mods, see the
-[Minecraft 1.10.2 biome compatibility checks](BIOME_COMPATIBILITY.md).
+[Minecraft 1.11.2 biome compatibility checks](BIOME_COMPATIBILITY.md).
 
 The presets use Minecraft temperature and weather multipliers. Regional
 profiles take their seasonal patterns from published climate normals and

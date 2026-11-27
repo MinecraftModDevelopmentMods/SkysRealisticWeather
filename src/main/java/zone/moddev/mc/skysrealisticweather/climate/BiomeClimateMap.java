@@ -68,7 +68,7 @@ public final class BiomeClimateMap {
     }
 
     private static boolean is(Biome biome, BiomeDictionary.Type type) {
-        return BiomeDictionary.isBiomeOfType(biome, type);
+        return BiomeDictionary.hasType(biome, type);
     }
 
     public static BiomeClimateMap defaults() {

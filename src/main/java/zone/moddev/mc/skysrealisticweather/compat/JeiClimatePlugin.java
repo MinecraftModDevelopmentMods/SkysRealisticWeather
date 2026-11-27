@@ -20,7 +20,8 @@ import zone.moddev.mc.skysrealisticweather.game.*;
 @SideOnly(Side.CLIENT)
 public final class JeiClimatePlugin extends BlankModPlugin {
     public static final String CATEGORY="skysrealisticweather.climate";
-    private static final int WIDTH=212,HEIGHT=160;
+    // JEI 4's compact recipe window is 196 x 166, including its header and borders.
+    private static final int WIDTH=172,HEIGHT=124;
     private IJeiRuntime runtime;
     private List<ItemStack> catalogue=Collections.emptyList();
     private final List<Entry> recipes=new ArrayList<>();
@@ -28,7 +29,7 @@ public final class JeiClimatePlugin extends BlankModPlugin {
 
     @Override public void register(IModRegistry registry) {
         if(!WeatherConfiguration.integration("jei"))return;
-        catalogue=new ArrayList<>(registry.getItemRegistry().getItemList());
+        catalogue=new ArrayList<>(registry.getIngredientRegistry().getIngredients(ItemStack.class));
         registry.addRecipeCategories(new Category(registry.getJeiHelpers().getGuiHelper()));
         registry.addRecipeHandlers(new Handler());
         MinecraftForge.EVENT_BUS.register(this);
@@ -43,7 +44,7 @@ public final class JeiClimatePlugin extends BlankModPlugin {
         recipes.clear();indexedWorld=game.world;
         if(indexedWorld==null)return;
         for(ItemStack stack:catalogue) {
-            if(stack==null||stack.getItem()==null)continue;
+            if(stack==null||stack.isEmpty())continue;
             for(PlantItems.Plant plant:PlantItems.resolve(stack,indexedWorld,game.player.getPosition())) {
                 Entry entry=new Entry(stack.copy(),plant);recipes.add(entry);runtime.getRecipeRegistry().addRecipe(entry);
             }
@@ -52,7 +53,6 @@ public final class JeiClimatePlugin extends BlankModPlugin {
     public static final class Entry extends BlankRecipeWrapper {
         final ItemStack stack;final PlantItems.Plant plant;
         Entry(ItemStack stack,PlantItems.Plant plant){this.stack=stack;this.plant=plant;}
-        @Override public List<ItemStack> getOutputs(){return Collections.singletonList(stack);}
         @Override public void getIngredients(IIngredients ingredients){ingredients.setOutput(ItemStack.class,stack);}
         public List<String> description(Minecraft game) {
             if(game.world==null||game.player==null)return Collections.singletonList("Local climate unavailable");
@@ -61,22 +61,27 @@ public final class JeiClimatePlugin extends BlankModPlugin {
             return lines;
         }
         @Override public void drawInfo(Minecraft game,int width,int height,int mouseX,int mouseY) {
-            game.fontRendererObj.drawString(game.fontRendererObj.trimStringToWidth(stack.getDisplayName(),WIDTH-25),24,5,0x404040);
-            int y=25;
+            game.fontRenderer.drawString(game.fontRenderer.trimStringToWidth(stack.getDisplayName(),WIDTH-38),24,5,0x404040);
+            game.fontRenderer.drawString("?",WIDTH-8,5,0x357C9D);
+            int y=24;
             for(String line:description(game)) {
-                if(line.contains("AgriCraft crop-stick growth"))continue;
+                if(line.contains("AgriCraft crop-stick growth")||line.startsWith("Typical local seasonal conditions:")
+                        ||TextFormatting.getTextWithoutFormattingCodes(line).startsWith("Temperature source:"))continue;
                 line=line.replace("Preferred temperature:","Preferred:").replace("Growth limits:","Limits:")
-                        .replace("Temperature check only; soil, light and native conditions still apply","Native soil/light rules still apply.")
-                        .replace("Typical local seasonal conditions:","Typical seasons:").replace("natural growth","growth");
+                        .replace("Temperature check only; soil, light and native conditions still apply","Native soil/light rules apply.")
+                        .replace("Estimates exclude weather and heating.","Estimates omit weather/heating.")
+                        .replace(" (controlled climate)","").replace("natural growth","growth");
                 int colour=line.contains(TextFormatting.RED.toString())?0xA52B2B:line.contains(TextFormatting.GREEN.toString())?0x286B32:
                         line.contains(TextFormatting.YELLOW.toString())?0x846000:0x404040;
-                for(String part:game.fontRendererObj.listFormattedStringToWidth(TextFormatting.getTextWithoutFormattingCodes(line),WIDTH)) {
+                for(String part:game.fontRenderer.listFormattedStringToWidth(TextFormatting.getTextWithoutFormattingCodes(line),WIDTH)) {
                     if(y>HEIGHT-10)return;
-                    game.fontRendererObj.drawString(part,0,y,colour);y+=10;
+                    game.fontRenderer.drawString(part,0,y,colour);y+=10;
                 }
             }
         }
-        @Override public List<String> getTooltipStrings(int mouseX,int mouseY){return description(Minecraft.getMinecraft());}
+        @Override public List<String> getTooltipStrings(int mouseX,int mouseY){
+            return mouseX>=WIDTH-12&&mouseX<WIDTH&&mouseY>=0&&mouseY<16?description(Minecraft.getMinecraft()):Collections.emptyList();
+        }
     }
     private static final class Handler implements IRecipeHandler<Entry> {
         public Class<Entry> getRecipeClass(){return Entry.class;}
@@ -90,6 +95,7 @@ public final class JeiClimatePlugin extends BlankModPlugin {
         Category(IGuiHelper gui){background=gui.createBlankDrawable(WIDTH,HEIGHT);}
         public String getUid(){return CATEGORY;}
         public String getTitle(){return "Climate requirements";}
+        public String getModName(){return "Sky's Realistic Weather";}
         public IDrawable getBackground(){return background;}
         public IDrawable getIcon(){return null;}
         public void drawExtras(Minecraft game){ }

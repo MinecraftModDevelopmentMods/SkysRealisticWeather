@@ -83,7 +83,7 @@ public final class BiomeCompatibilityProbe {
         if (event.world != world || event.phase != TickEvent.Phase.END) return;
         ticks++;
         if (ticks == 120) {
-            if (Loader.isModLoaded("BiomesOPlenty")) verifyBopClimates();
+            if (Loader.isModLoaded("biomesoplenty")) verifyBopClimates();
             sample(true);
             command("skyweather season set summer 45");
         } else if (ticks == 160) {

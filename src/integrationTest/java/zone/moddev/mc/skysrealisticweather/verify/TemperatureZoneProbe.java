@@ -56,7 +56,7 @@ final class TemperatureZoneProbe {
         WeatherApi.removeTemperatureZone(world,high.id);require(WeatherApi.getLocalTemperature(world,CROP).getAsDouble()==room.temperature,"removing winner restores lower zone");
         AtomicReference<Throwable> wrongThread=new AtomicReference<>();Thread worker=new Thread(()->{try{WeatherApi.putTemperatureZone(world,room);}catch(Throwable e){wrongThread.set(e);}});
         worker.start();worker.join();require(wrongThread.get() instanceof IllegalStateException,"off-thread mutations rejected");
-        WorldServer nether=world.getMinecraftServer().worldServerForDimension(-1);nether.getChunkFromBlockCoords(CROP);
+        WorldServer nether=world.getMinecraftServer().getWorld(-1);nether.getChunkFromBlockCoords(CROP);
         require(WeatherApi.getTemperatureSample(nether,CROP).get().source==TemperatureSample.Source.AMBIENT,"dimension isolation");
         WeatherApi.putTemperatureZone(nether,room);require(WeatherApi.getLocalTemperature(nether,CROP).getAsDouble()==room.temperature,"zones usable outside seasonal dimensions");
         WeatherApi.removeTemperatureZone(nether,ROOM);
@@ -92,7 +92,7 @@ final class TemperatureZoneProbe {
         require(Math.abs(WeatherApi.getLocalTemperature(world,CROP).getAsDouble()-tropical-nearBonus)<.00001,"furnace also adds warmth to hot ambient");
         Arrays.fill(biomes,(byte)Biome.getIdForBiome(Biomes.ICE_PLAINS));
         TileEntityFurnace furnace=(TileEntityFurnace)world.getTileEntity(FURNACE);
-        furnace.setInventorySlotContents(1,null);furnace.setField(0,1);advance(world);furnace.update();
+        furnace.setInventorySlotContents(1,ItemStack.EMPTY);furnace.setField(0,1);advance(world);furnace.update();
         require(WeatherApi.getTemperatureSample(world,CROP).get().source==TemperatureSample.Source.AMBIENT,"burnout removes heat");
         start(world);world.setBlockToAir(FURNACE);
         require(WeatherApi.getTemperatureSample(world,CROP).get().source==TemperatureSample.Source.AMBIENT,"broken furnace cannot leave ghost heat");

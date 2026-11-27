@@ -63,7 +63,7 @@ public final class ClimateModeScreen extends GuiScreen {
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         drawDefaultBackground();
-        drawCenteredString(fontRendererObj, BuildInfo.NAME, width / 2, 12, 0xFFFFFF);
+        drawCenteredString(fontRenderer, BuildInfo.NAME, width / 2, 12, 0xFFFFFF);
         String help;
         switch (WeatherConfiguration.mode()) {
             case PER_BIOME: help = "Each biome uses its mapped climate. Configure biome mappings, the shared calendar and effects."; break;
@@ -71,11 +71,11 @@ public final class ClimateModeScreen extends GuiScreen {
             default: help = "Use one selected climate preset throughout the Overworld, with local biome and altitude adjustments."; break;
         }
         int y = 122;
-        for (String line : fontRendererObj.listFormattedStringToWidth(help, Math.min(400, width - 24))) {
-            drawCenteredString(fontRendererObj, line, width / 2, y, 0xD6E5F3);
+        for (String line : fontRenderer.listFormattedStringToWidth(help, Math.min(400, width - 24))) {
+            drawCenteredString(fontRenderer, line, width / 2, y, 0xD6E5F3);
             y += 10;
         }
-        drawCenteredString(fontRendererObj, "Saved changes apply after restarting Minecraft.", width / 2, height - 92, 0xBBBBBB);
+        drawCenteredString(fontRenderer, "Saved changes apply after restarting Minecraft.", width / 2, height - 92, 0xBBBBBB);
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
 
@@ -116,8 +116,8 @@ public final class ClimateModeScreen extends GuiScreen {
         @Override
         public void drawScreen(int mouseX, int mouseY, float partialTicks) {
             drawDefaultBackground();
-            drawCenteredString(fontRendererObj, "Real World Climate", width / 2, 20, 0xFFFFFF);
-            drawCenteredString(fontRendererObj, "Uses Open-Meteo weather data for the selected location.", width / 2, 36, 0xD6E5F3);
+            drawCenteredString(fontRenderer, "Real World Climate", width / 2, 20, 0xFFFFFF);
+            drawCenteredString(fontRenderer, "Uses Open-Meteo weather data for the selected location.", width / 2, 36, 0xD6E5F3);
             super.drawScreen(mouseX, mouseY, partialTicks);
         }
     }

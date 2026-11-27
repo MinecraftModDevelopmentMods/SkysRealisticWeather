@@ -24,11 +24,13 @@ Storm Coast and Two Winters. The standard year lasts 365 Minecraft days.
 Day/night temperature changes and independent cold spells make weather
 transitions more noticeable. The British Isles preset represents northern
 British lowlands, with snowier uplands. See the [climate balance and test
-assumptions](docs/TESTING_ASSUMPTIONS.md).
+assumptions](docs/TESTING_ASSUMPTIONS.md). This version also has
+[two-client multiplayer and whole-chunk performance results](docs/PERFORMANCE_1_11_2.md).
 
 Natural plant growth also follows local temperature. Cool-weather crops, warm
 crops and fruit use editable profiles; fertiliser keeps its native behaviour.
-Optional integrations cover HarvestCraft, AgriCraft, Mystical Agriculture and
+Terrain providers can still generate their normal forests and parks in winter.
+Optional integrations cover HarvestCraft, Mystical Agriculture and
 Forestry. Hover seeds, saplings and crops to see preferred temperatures and
 whether the current local temperature suits them. Celsius is the default;
 choose Fahrenheit through **Config → Display / units**. See
@@ -58,9 +60,15 @@ body temperature and survival systems. JEI, Hwyla and The One Probe provide
 crop climate information. Operator validation and JSON reports help diagnose
 pack rules. See [modpack support](docs/PACK_SUPPORT.md).
 
+This branch is for **Minecraft 1.11.2**, version **0.1.21.111021**. See the
+[compatibility guide](docs/PORTING_1_11_2.md) for the supported mod versions.
+The [changelog](CHANGELOG.md) covers what's changed, and the
+[wiki](https://github.com/MinecraftModDevelopmentMods/SkysRealisticWeather/wiki)
+has guides for players, pack makers and other mod developers.
+
 ## Install
 
-Use Minecraft **1.10.2**, Forge **12.18.3.2511** and **Java 8**. Put the main jar
+Use Minecraft **1.11.2**, Forge **13.20.1.2588** and **Java 8**. Put the main jar
 in the `mods` folder on both the client and the server. The mod works in
 single-player, LAN and dedicated-server worlds. It has no required content mods.
 
@@ -85,4 +93,6 @@ Weather data provided by [Open-Meteo.com](https://open-meteo.com/).
 - [Weather events by climate](docs/WEATHER.md)
 - [Weather controller and server commands](docs/ADMIN.md)
 - [Build and verification](docs/BUILDING.md)
+- [Languages and translation coverage](docs/LANGUAGES.md)
+- [Preparing a release](docs/RELEASING.md)
 - [Licence](LICENSE) and [credits](NOTICE)

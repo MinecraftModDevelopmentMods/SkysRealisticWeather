@@ -37,7 +37,7 @@ public final class CrashQualificationProbe {
     @Mod.EventHandler public void started(FMLServerStartedEvent event) {
         if(!Boolean.getBoolean("crash.probe"))return;
         MinecraftServer server=FMLCommonHandler.instance().getMinecraftServerInstance();
-        WorldServer world=server.worldServerForDimension(0);long start=System.nanoTime();
+        WorldServer world=server.getWorld(0);long start=System.nanoTime();
         List<ForgeChunkManager.Ticket> tickets=new ArrayList<>();
         try {
             String phase=System.getProperty("crash.phase","soak");
@@ -59,7 +59,7 @@ public final class CrashQualificationProbe {
                     if(tick%200==0){
                         for(ChunkPos pos:activeChunks)ForgeChunkManager.unforceChunk(ticket,pos);activeChunks.clear();
                         for(int index=0;index<Math.min(24,locations.size());index++) {
-                            ChunkPos pos=locations.get((tick/200*24+index)%locations.size());world.getChunkFromChunkCoords(pos.chunkXPos,pos.chunkZPos);ForgeChunkManager.forceChunk(ticket,pos);activeChunks.add(pos);
+                            ChunkPos pos=locations.get((tick/200*24+index)%locations.size());world.getChunkFromChunkCoords(pos.x,pos.z);ForgeChunkManager.forceChunk(ticket,pos);activeChunks.add(pos);
                         }
                         activeCrops.clear();for(BlockPos pos:crops)if(activeChunks.contains(new ChunkPos(pos)))activeCrops.add(pos);
                         weather("schedule",world,tick/200);System.out.println("QUALIFY_PROGRESS tick="+tick+" activeCropPoints="+activeCrops.size()+" cropEvents="+cropEvents+" updates="+updates);

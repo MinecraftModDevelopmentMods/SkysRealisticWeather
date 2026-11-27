@@ -1,0 +1,11 @@
+tile.skysrealisticweather.weather_controller.name=Winds 'n' Weather Helm
+itemGroup.skysweatheradmin=Sky's Weather Cap'n
+key.categories.skysrealisticweather=Sky's Realistic Weather
+key.skysrealisticweather.climateHud=Show or Stow Climate HUD
+
+tile.skysrealisticweather.thermometer.name=Heat Gauge
+hud.skysrealisticweather.temperature=Heat
+hud.skysrealisticweather.here=Here, matey
+hud.skysrealisticweather.placed=Set down
+
+tooltip.skysrealisticweather.thermometer=Keep in either hand, or stow on a wall or deck.

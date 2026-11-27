@@ -9,6 +9,10 @@ still apply. Bonemeal and direct fertiliser keep their native behaviour and
 eligibility. Machines that invoke the ordinary natural-growth path follow the
 climate rules.
 
+Terrain generation keeps native plant and tree generation, including generators
+that grow saplings to create parks or forests. These generated trees can appear
+in winter; later natural growth follows the local climate as usual.
+
 Registered [temperature zones](TEMPERATURE_ZONES.md) and burning vanilla furnace
 zones can override that temperature. The same effective temperature reaches
 crop tooltips, thermometers and the compact HUD. F3 and `/skyweather climate`
@@ -22,14 +26,14 @@ positions retain precedence.
 | Vanilla crops, stems, cocoa, reeds, cactus and plants using Forge's crop event | Natural growth suitability through the Forge event; respect another mod's explicit ALLOW or DENY. |
 | Vanilla and compatible saplings | Forge sapling event, with state-specific tree profiles. |
 | Pam's HarvestCraft field crops and fruit | Natural growth rolls, including fruit logs. Saplings use the Forge sapling event. |
-| AgriCraft | The seeded, immature natural crop-stick callback. Seed identity selects the profile. Mature plants, cross-crop processing, genetics and direct growth/fertiliser calls retain native behaviour. |
 | Mystical Agriculture | Resource crops are exempt by default. An explicit mapping can opt them into a temperature profile. |
-| Forestry | Ambient temperature and a seasonal humidity proxy reach Forestry's climate manager, including consumers such as bees. Its controlled climate positions retain their own temperature and humidity. Ordinary mapped crops also recognise a Forestry controlled temperature at their position. |
+| Forestry | Ambient temperature and a seasonal humidity proxy reach Forestry's climate manager, including consumers such as bees, through Forestry 5.3's ambient climate-info fallback. Its controlled climate positions retain their own temperature and humidity. Ordinary mapped crops also recognise a Forestry controlled temperature at their position. |
 
-The pinned Minecraft 1.10.2 targets are HarvestCraft **1.10.2j**, AgriCraft
-**2.0.0-0.11.0-a21** with InfinityLib **0.11.0**, Mystical Agriculture
-**1.5.10**, and Forestry **5.2.17.388**. Other releases need their own
-compatibility check.
+The pinned Minecraft 1.11.2 targets are HarvestCraft **1.11.2h**, Mystical
+Agriculture **1.5.9**, and Forestry **5.3.4.257**. AgriCraft has no published
+1.11.2 build in its project file listing and is not a supported integration
+on this port. Legacy config keys remain readable for pack migration. Other
+releases need their own compatibility check.
 
 The optional adapters use narrow runtime hooks inside this mod. Downloaded
 third-party jars and sources are not edited or bundled. A hook whose expected
@@ -75,19 +79,11 @@ The `mappings` list contains overrides, for example:
 minecraft:wheat=cool
 minecraft:sapling[type=spruce]=cool
 harvestcraft:pamtomatocrop=warm
-agricraft:tomato_plant=warm
 mysticalagriculture:inferium_crop=exempt
 ```
 
-AgriCraft selectors use `agricraft:<plant ID>` from its plant definitions, rather
-than the shared crop-stick block ID. A block selector can provide a fallback.
-State selectors are more specific than a plain block ID within the same source.
-Config overrides API registrations, which override the bundled mappings. The
-last equally specific matching row wins. Unknown plants keep native growth.
-Invalid rows remain in the config for correction; unresolved profiles keep
-native growth. Magical seed namespaces remain exempt unless a rule explicitly
-selects another profile. The bundled plant list is in
-`assets/skysrealisticweather/plant_growth.json` inside the mod jar.
+The legacy `agricraft` switch and selectors remain readable for configuration
+migration; they do not represent a supported 1.11.2 dependency.
 
 `/skyweather crop` inspects the plant under an operator's crosshair;
 `/skyweather crop x y z` inspects a loaded position. It reports the resolved
@@ -117,9 +113,7 @@ that it is unavailable. Missing temperature data leaves native growth in effect;
 climate rules resume when a valid reading returns.
 
 Vanilla and supported farming seeds, sapling variants, HarvestCraft produce,
-Mystical Agriculture crops/essences and AgriCraft's NBT seed identities are
-recognised. Tagged AgriCraft seeds label their crop-stick growth rules; ordinary
-planting outside crop sticks uses the underlying plant's own rules. Crafted foods do not acquire crop tooltips. When several plants
+Mystical Agriculture crops and essences are recognised. Crafted foods do not acquire crop tooltips. When several plants
 produce the same item and have different climate rules, the tooltip directs you
 to their seeds rather than picking one. Native plantable items from other mods
 can use the existing profile mappings; unrelated custom item encodings may need

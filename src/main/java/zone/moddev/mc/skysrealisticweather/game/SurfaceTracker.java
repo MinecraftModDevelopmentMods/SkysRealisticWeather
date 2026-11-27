@@ -51,7 +51,7 @@ public final class SurfaceTracker {
             synchronized (this) {
                 deposits.computeIfAbsent(chunk, unused -> new Int2ObjectOpenHashMap<>()).put(localIndex(position), deposit);
             }
-            chunk.setChunkModified();
+            chunk.markDirty();
         }
         return true;
     }
@@ -89,7 +89,7 @@ public final class SurfaceTracker {
         Int2ObjectOpenHashMap<Deposit> entries = deposits.get(chunk);
         if (entries != null && entries.remove(localIndex(position)) != null) {
             if (entries.isEmpty()) deposits.remove(chunk);
-            chunk.setChunkModified();
+            chunk.markDirty();
         }
     }
 
@@ -105,7 +105,7 @@ public final class SurfaceTracker {
             if (!row.hasKey("position", 4) || !row.hasKey("deposit", 1)) continue;
             BlockPos position = BlockPos.fromLong(row.getLong("position"));
             int type = row.getByte("deposit");
-            if (position.getX() >> 4 != chunk.xPosition || position.getZ() >> 4 != chunk.zPosition
+            if (position.getX() >> 4 != chunk.x || position.getZ() >> 4 != chunk.z
                     || position.getY() < 0 || position.getY() >= 256 || type < 0 || type >= Deposit.ALL.length) continue;
             Deposit deposit = Deposit.ALL[type];
             if (chunk.getBlockState(position) == deposit.placed()) entries.put(localIndex(position), deposit);
@@ -121,8 +121,8 @@ public final class SurfaceTracker {
         NBTTagList list = new NBTTagList();
         for (Int2ObjectMap.Entry<Deposit> entry : entries.int2ObjectEntrySet()) {
             int index = entry.getIntKey();
-            BlockPos position = new BlockPos((chunk.xPosition << 4) + (index & 15), index >> 8,
-                    (chunk.zPosition << 4) + (index >> 4 & 15));
+            BlockPos position = new BlockPos((chunk.x << 4) + (index & 15), index >> 8,
+                    (chunk.z << 4) + (index >> 4 & 15));
             NBTTagCompound row = new NBTTagCompound();
             row.setLong("position", position.toLong());
             row.setByte("deposit", (byte) entry.getValue().ordinal());

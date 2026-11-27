@@ -81,10 +81,12 @@ public final class WeatherProbe {
     @Mod.EventHandler
     public void started(FMLServerStartedEvent event) {
         MinecraftServer server = net.minecraftforge.fml.common.FMLCommonHandler.instance().getMinecraftServerInstance();
-        world = server.worldServerForDimension(0);
+        world = server.getWorld(0);
         require(HookStatus.available(), "required weather hooks loaded");
         switch (MODE) {
             case "temperature-zones": TemperatureZoneProbe.run(world); break;
+            case "thermal-network": new TemperatureNetworkProbe(world); break;
+            case "jei-client": new zone.moddev.mc.skysrealisticweather.verify.jei.JeiServerProbe(world); break;
             case "precipitation": PrecipitationProbe.run(world); break;
             case "thermometer": ThermometerProbe.run(world); break;
             case "plants":
@@ -227,7 +229,7 @@ public final class WeatherProbe {
         require(weather(CHECK.east(16)).precipitation == LocalWeather.Precipitation.NONE, "desert stays dry");
         time(MID_WINTER, 0);
         require(!WeatherApi.getWeather(world, new BlockPos(180000, 70, 180000)).isPresent(), "unloaded query");
-        require(!WeatherApi.getSeason(world.getMinecraftServer().worldServerForDimension(-1)).isPresent(), "Nether scope");
+        require(!WeatherApi.getSeason(world.getMinecraftServer().getWorld(-1)).isPresent(), "Nether scope");
         succeed("WRITE");
     }
 
@@ -376,7 +378,7 @@ public final class WeatherProbe {
             require(command("skyweather climate ~ ~ ~") == 1, "relative climate diagnostic succeeds");
             require(command("skyweather climate 180000 70 180000") == 0
                     && world.getChunkProvider().getLoadedChunk(11250, 11250) == null, "diagnostic does not generate terrain");
-            require(WeatherApi.getClimate(world.getMinecraftServer().worldServerForDimension(-1), covered, Biomes.PLAINS)
+            require(WeatherApi.getClimate(world.getMinecraftServer().getWorld(-1), covered, Biomes.PLAINS)
                     .isPresent() == false, "Nether has no seasonal climate frame");
             require(apiEpisodeStarts == 1 && apiEpisodeEnds == 0, "storm start event fires once");
             command("skyweather weather clear 4");
@@ -463,17 +465,19 @@ public final class WeatherProbe {
             BlockPos foot = new BlockPos(3, 70, 6);
             world.setBlockState(foot, Blocks.STONE.getDefaultState());
             Item item = Item.getItemFromBlock(WeatherController.BLOCK);
-            require(item.onItemUse(new ItemStack(item), guest, world, foot, EnumHand.MAIN_HAND,
+            guest.setHeldItem(EnumHand.MAIN_HAND, new ItemStack(item));
+            require(item.onItemUse(guest, world, foot, EnumHand.MAIN_HAND,
                     EnumFacing.UP, 0.5F, 1, 0.5F) == EnumActionResult.FAIL && world.isAirBlock(foot.up()),
                     "guest creative placement is denied on the server");
-            require(item.onItemUse(new ItemStack(item), operator, world, foot, EnumHand.MAIN_HAND,
+            operator.setHeldItem(EnumHand.MAIN_HAND, new ItemStack(item));
+            require(item.onItemUse(operator, world, foot, EnumHand.MAIN_HAND,
                     EnumFacing.UP, 0.5F, 1, 0.5F) == EnumActionResult.SUCCESS
                     && world.getBlockState(foot.up()).getBlock() == WeatherController.BLOCK,
                     "operator places the registered controller");
             net.minecraft.block.Block placed = world.getBlockState(foot.up()).getBlock();
             for (EntityPlayerMP player : new EntityPlayerMP[] {guest, operator}) {
                 placed.onBlockActivated(world, foot.up(), world.getBlockState(foot.up()), player,
-                        EnumHand.MAIN_HAND, null, EnumFacing.UP, 0.5F, 1, 0.5F);
+                        EnumHand.MAIN_HAND, EnumFacing.UP, 0.5F, 1, 0.5F);
             }
         }
         ServerWeather weather = ServerWeather.INSTANCE;

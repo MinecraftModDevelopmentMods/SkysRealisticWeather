@@ -1,0 +1,21 @@
+{
+  "projects": [
+    { "slug": "pams-harvestcraft", "type": "optionalDependency" },
+    { "slug": "mystical-agriculture", "type": "optionalDependency" },
+    { "slug": "forestry", "type": "optionalDependency" },
+    { "slug": "crafttweaker", "type": "optionalDependency" },
+    { "slug": "tough-as-nails", "type": "optionalDependency" },
+    { "slug": "jei", "type": "optionalDependency" },
+    { "slug": "hwyla", "type": "optionalDependency" },
+    { "slug": "the-one-probe", "type": "optionalDependency" },
+    { "slug": "biomes-o-plenty", "type": "optionalDependency" },
+    { "slug": "abyssalcraft", "type": "optionalDependency" },
+    { "slug": "vampirism-become-a-vampire", "type": "optionalDependency" },
+    { "slug": "climate-control-geographicraft", "type": "optionalDependency" },
+    { "slug": "biometweaker", "type": "optionalDependency" },
+    { "slug": "open-terrain-generator", "type": "optionalDependency" },
+    { "slug": "biome-bundle", "type": "optionalDependency" },
+    { "slug": "the-lost-cities", "type": "optionalDependency" },
+    { "slug": "base-metals", "type": "optionalDependency" }
+  ]
+}

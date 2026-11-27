@@ -47,9 +47,9 @@ final class ClimateHud {
             event.getRight().add("Sky's Climate");
             for (String line : ClimateReadout.details(climate, local, WeatherApi.getWeatherEpisode(game.world, position).orElse(null))) {
                 int width = Math.max(0, event.getResolution().getScaledWidth() / 2 - 8);
-                event.getRight().add(game.fontRendererObj.trimStringToWidth(line, width));
+                event.getRight().add(game.fontRenderer.trimStringToWidth(line, width));
             }
-            event.getRight().add(game.fontRendererObj.trimStringToWidth(ClimateReadout.temperature(temperature,WeatherConfiguration.temperatureUnit()),
+            event.getRight().add(game.fontRenderer.trimStringToWidth(ClimateReadout.temperature(temperature,WeatherConfiguration.temperatureUnit()),
                     Math.max(0,event.getResolution().getScaledWidth()/2-8)));
         } else {
             event.getRight().add(ClimateReadout.compact(climate,new LocalWeather(local.precipitation,local.source,temperature.temperature,
