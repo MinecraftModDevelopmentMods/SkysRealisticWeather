@@ -1,0 +1,11 @@
+tile.skysrealisticweather.weather_controller.name=Controlo meteorológico
+itemGroup.skysweatheradmin=Administração meteorológica de Sky
+key.categories.skysrealisticweather=Sky's Realistic Weather
+key.skysrealisticweather.climateHud=Alternar HUD do clima
+
+tile.skysrealisticweather.thermometer.name=Termómetro
+hud.skysrealisticweather.temperature=Temperatura
+hud.skysrealisticweather.here=Aqui
+hud.skysrealisticweather.placed=Colocado
+
+tooltip.skysrealisticweather.thermometer=Segura em qualquer uma das mãos ou coloca numa parede ou no chão.

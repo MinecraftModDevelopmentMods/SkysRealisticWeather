@@ -1,0 +1,11 @@
+tile.skysrealisticweather.weather_controller.name=날씨 제어기
+itemGroup.skysweatheradmin=Sky의 날씨 관리
+key.categories.skysrealisticweather=Sky's Realistic Weather
+key.skysrealisticweather.climateHud=기후 HUD 표시 전환
+
+tile.skysrealisticweather.thermometer.name=온도계
+hud.skysrealisticweather.temperature=기온
+hud.skysrealisticweather.here=현재 위치
+hud.skysrealisticweather.placed=설치 위치
+
+tooltip.skysrealisticweather.thermometer=어느 손에든 들거나 벽 또는 바닥에 설치할 수 있습니다.

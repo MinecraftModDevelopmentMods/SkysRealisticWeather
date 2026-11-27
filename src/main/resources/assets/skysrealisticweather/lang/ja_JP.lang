@@ -1,0 +1,11 @@
+tile.skysrealisticweather.weather_controller.name=気象コントローラー
+itemGroup.skysweatheradmin=Skyの天候管理
+key.categories.skysrealisticweather=Sky's Realistic Weather
+key.skysrealisticweather.climateHud=気候HUDの表示を切り替え
+
+tile.skysrealisticweather.thermometer.name=温度計
+hud.skysrealisticweather.temperature=気温
+hud.skysrealisticweather.here=現在地
+hud.skysrealisticweather.placed=設置場所
+
+tooltip.skysrealisticweather.thermometer=どちらかの手に持つか、壁や床に設置できます。

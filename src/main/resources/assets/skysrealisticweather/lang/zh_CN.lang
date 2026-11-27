@@ -1,0 +1,11 @@
+tile.skysrealisticweather.weather_controller.name=天气控制器
+itemGroup.skysweatheradmin=Sky 的天气管理
+key.categories.skysrealisticweather=Sky's Realistic Weather
+key.skysrealisticweather.climateHud=切换气候 HUD
+
+tile.skysrealisticweather.thermometer.name=温度计
+hud.skysrealisticweather.temperature=气温
+hud.skysrealisticweather.here=当前位置
+hud.skysrealisticweather.placed=放置位置
+
+tooltip.skysrealisticweather.thermometer=可拿在任意一只手中，也可放置在墙上或地面上。
