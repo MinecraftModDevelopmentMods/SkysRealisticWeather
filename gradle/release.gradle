@@ -115,7 +115,7 @@ tasks.register('verifyReleaseArtifacts') {
 
 tasks.register('writeReleaseChecksums') {
     group = 'verification'
-    dependsOn tasks.named('verifyReleaseArtifacts')
+    dependsOn tasks.named('verifyReleaseArtifacts'), tasks.named('writeReleaseChecksum')
     def output = layout.buildDirectory.file('release/SHA256SUMS')
     outputs.file(output)
     inputs.files(releaseFiles.map { names -> names.collect { layout.buildDirectory.file("libs/${it}") } })
