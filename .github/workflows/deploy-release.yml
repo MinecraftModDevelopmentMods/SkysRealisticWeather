@@ -605,6 +605,15 @@ jobs:
       - name: Verify artifact
         run: (cd "$RUNNER_TEMP/release-input" && sha256sum --check SHA256SUMS)
 
+      - name: Remember the current GitHub default for a backport
+        if: needs.preflight.outputs.minecraft_version == '1.10.2'
+        id: previous_default
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          id="$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq '.id')"
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+
       - name: Publish GitHub Release last
         uses: Kira-NT/mc-publish@52307b03863581dec6b652b83e597aec02ebb075 # v3.3.1
         with:
@@ -629,7 +638,6 @@ jobs:
         if: needs.preflight.outputs.minecraft_version == '1.10.2'
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ needs.preflight.outputs.release_tag }}
+          LATEST_RELEASE_ID: ${{ steps.previous_default.outputs.id }}
         run: |
-          id="$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" --jq '.id')"
-          gh api --method PATCH "repos/$GITHUB_REPOSITORY/releases/$id" -f make_latest=false >/dev/null
+          gh api --method PATCH "repos/$GITHUB_REPOSITORY/releases/$LATEST_RELEASE_ID" -f make_latest=true >/dev/null
